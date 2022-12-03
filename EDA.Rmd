@@ -52,6 +52,40 @@ teamsSubset$LgWin[is.na(teamsSubset$LgWin)] <- "N"
 teamsSubset$lgID[teamsSubset$franchID == "HOU"] <- "AL"
 teamsSubset$lgID[teamsSubset$franchID == "MIL"] <- "NL"
 
+str(teamsSubset)
+
+#assign current divisions
+teamsSubset$divID[teamsSubset$franchID == "STL"] <- "Central"
+teamsSubset$divID[teamsSubset$franchID == "CHC"] <- "Central"
+teamsSubset$divID[teamsSubset$franchID == "MIL"] <- "Central"
+teamsSubset$divID[teamsSubset$franchID == "PIT"] <- "Central"
+teamsSubset$divID[teamsSubset$franchID == "CIN"] <- "Central"
+teamsSubset$divID[teamsSubset$franchID == "CLE"] <- "Central"
+teamsSubset$divID[teamsSubset$franchID == "CHW"] <- "Central"
+teamsSubset$divID[teamsSubset$franchID == "MIN"] <- "Central"
+teamsSubset$divID[teamsSubset$franchID == "DET"] <- "Central"
+teamsSubset$divID[teamsSubset$franchID == "KCR"] <- "Central"
+teamsSubset$divID[teamsSubset$franchID == "ATL"] <- "East"
+teamsSubset$divID[teamsSubset$franchID == "NYM"] <- "East"
+teamsSubset$divID[teamsSubset$franchID == "PHI"] <- "East"
+teamsSubset$divID[teamsSubset$franchID == "FLA"] <- "East"
+teamsSubset$divID[teamsSubset$franchID == "WSN"] <- "East"
+teamsSubset$divID[teamsSubset$franchID == "NYY"] <- "East"
+teamsSubset$divID[teamsSubset$franchID == "TOR"] <- "East"
+teamsSubset$divID[teamsSubset$franchID == "TBD"] <- "East"
+teamsSubset$divID[teamsSubset$franchID == "BAL"] <- "East"
+teamsSubset$divID[teamsSubset$franchID == "BOS"] <- "East"
+teamsSubset$divID[teamsSubset$franchID == "LAD"] <- "West"
+teamsSubset$divID[teamsSubset$franchID == "SDP"] <- "West"
+teamsSubset$divID[teamsSubset$franchID == "SFG"] <- "West"
+teamsSubset$divID[teamsSubset$franchID == "ARI"] <- "West"
+teamsSubset$divID[teamsSubset$franchID == "COL"] <- "West"
+teamsSubset$divID[teamsSubset$franchID == "HOU"] <- "West"
+teamsSubset$divID[teamsSubset$franchID == "SEA"] <- "West"
+teamsSubset$divID[teamsSubset$franchID == "ANA"] <- "West"
+teamsSubset$divID[teamsSubset$franchID == "TEX"] <- "West"
+teamsSubset$divID[teamsSubset$franchID == "OAK"] <- "West"
+
 # rename lgID to currentLeague & name to team
 teamsSubset <- rename(teamsSubset, currentLeague = lgID,
                       team = name)
@@ -76,7 +110,7 @@ teamSubsetFinal <- teamSubsetMutate %>%
   select(-W, -L, -WCWin, -DivWin, -X2B, -X3B, 
          -AB, -SB, -CS, -HBP, -SF, -IPouts, -SO,
          -DP, -BPF, -PPF, -teamIDBR, -teamIDlahman45, 
-         -teamIDretro, -divID, -Rank, -CG, -Ghome, -teamID, 
+         -teamIDretro, -Rank, -CG, -Ghome, -teamID, 
          -ER, -CG, -SHO, -SV, -SOA, -R, -H, -HR, -BB,
          -RA, -HA, -HRA, -BBA, -E, -park, -G, -attendance)
 
@@ -145,7 +179,7 @@ n + geom_line(color = "red") +
 ```{r teamSummary}
 
 teamWLSummary <- teamSubsetFinal %>%
-  group_by(name) %>%
+  group_by(currentLeague, team) %>%
   mutate(winningSeason = ifelse(winPct > 0.5, 1, 0), 
          losingSeason = ifelse(winPct <= 0.5, 1, 0), 
          worldSeries = ifelse(WSWin == "Y", 1, 0), 
@@ -158,11 +192,26 @@ teamWLSummary <- teamSubsetFinal %>%
             worldSeriesWins = sum(worldSeries))
 
 teamWSSummary <- teamSubsetFinal %>%
-  group_by(name) %>%
+  group_by(team) %>%
   mutate(worldSeries = ifelse(WSWin == "Y", 1, 0), 
          leagueW = ifelse(LgWin == "Y", 1, 0)) %>%
   summarise(leagueWins = sum(leagueW), 
             worldSeriesWins = sum(worldSeries))
+
+
+
+testing2 <- teamSubsetFinal %>%
+  group_by(team) %>%
+  filter(currentLeague == "NL" & divID == "Central") 
+
+
+testgraph <- ggplot(data = testing2, aes(x = team, y = winPct)) 
+testgraph + geom_boxplot()
+
+testgraph2 <- ggplot(data = teamWSSummary, aes(team, ))
+
+
+str(teamSubsetFinal)
 
 ```
 
