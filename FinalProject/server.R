@@ -86,7 +86,7 @@ teamsSubset <- rename(teamsSubset, currentLeague = lgID,
 
 #adding new columns
 teamSubsetMutate <- teamsSubset %>%
-  mutate(winPct = W/(W+L), 
+  mutate(winPct = W/(W+L)*100, 
          rpg = R/G, 
          hpg = H/G,
          tbpg = ((H + X2B + 2*X3B + 3*HR)/G), 
@@ -108,10 +108,16 @@ teamSubsetFinal <- teamSubsetMutate %>%
          -ER, -CG, -SHO, -SV, -SOA, -R, -H, -HR, -BB,
          -RA, -HA, -HRA, -BBA, -E, -park, -G, -attendance)
 
-
-
-# Define server logic required to draw a histogram
+# Define server logic 
 shinyServer(function(input, output, session) {
+  
+  #create markdown file to be used for about section
+  output$mymarkdown <- renderUI({  
+    rmarkdown::render(input = "about.Rmd",
+                      output_file = 'about.html')  
+    shiny::includeHTML('about.html') 
+  }) 
+  
 
  #create plot1 conditionally based on input stat.
  output$plot1 <- renderPlot({ 
@@ -260,27 +266,34 @@ shinyServer(function(input, output, session) {
       offVar <- input$offense
      
       off1 <- teamSubsetFinal %>%
-         filter(LgWin == "Y") %>%
          filter((yearID <= input$yrSliderO[2]) & (yearID >= input$yrSliderO[1])) %>%
          mutate(across(c(offVar, winPct), round, 2)) %>%
          select(yearID, WSWin, team, offVar, winPct) %>%
          rename("Year" = yearID, "World Series Winner?" = WSWin, 
                 "Franchise Name" = team, "Proportion of Games Won" = winPct)
    
-      datatable(off1)
+      datatable(off1, caption = htmltools::tags$caption(style = 'caption-side: top;
+                                                text-align: left;
+                                                color:black;
+                                                font-size:20px;
+                                                font-weight: bold;', "Offensive Statistics"))
+      
     } else if(input$stat == "defStat") {
       
       defVar <- input$defense
       
       def1 <- teamSubsetFinal %>%
-        filter(LgWin == "Y") %>%
         filter((yearID <= input$yrSliderD[2]) & (yearID >= input$yrSliderD[1])) %>%
         mutate(across(c(defVar, winPct), round, 2)) %>%
         select(yearID, WSWin, team, defVar, winPct) %>%
         rename("Year" = yearID, "World Series Winner?" = WSWin, 
                "Franchise Name" = team, "Proportion of Games Won" = winPct)
       
-      datatable(def1)
+      datatable(def1, caption = htmltools::tags$caption(style = 'caption-side: top;
+                                                text-align: left;
+                                                color:black;
+                                                font-size:20px;
+                                                font-weight: bold;', "Defensive Statistics"))
       
     } else if(input$stat == "frPer") {
       
@@ -294,12 +307,12 @@ shinyServer(function(input, output, session) {
         rename("Year" = yearID, "World Series Winner?" = WSWin, 
              "Franchise Name" = team, "Proportion of Games Won" = winPct)
     
-      datatable(per1)
-    }
-   
-   
-   
-   else if(input$stat == "frSum") {
+      datatable(per1, caption = htmltools::tags$caption(style = 'caption-side: top;
+                                                text-align: left;
+                                                color:black;
+                                                font-size:20px;
+                                                font-weight: bold;', "Individual Team Performance"))
+    } else if(input$stat == "frSum") {
      
       lgVar <- input$lg
 
@@ -322,9 +335,43 @@ shinyServer(function(input, output, session) {
         rename("Franchise Name" = team, "Percentage of Winning Seasons" = winningSeasonPct, 
                "League Championships" = leagueWins, "World Series Titles" = worldSeriesWins)
 
-      datatable(teamWLSummary)
+      datatable(teamWLSummary, caption = htmltools::tags$caption(style = 'caption-side: top;
+                                                text-align: left;
+                                                color:black;
+                                                font-size:20px;
+                                                font-weight: bold;', "League Statistics"))
 }
    
 })
+ 
+ userDataSet <- reactive({
+   
+   col_order <- c("yearID", "currentLeague", "divID",
+                  "team", "winPct", "rpg", "hpg", 
+                  "tbpg", "hrpg", "bbpg", "rapg", 
+                  "ERA", "hapg", "hrapg", "bbapg", 
+                  "epg", "FP", "avgAttendance", "LgWin", "WSWin")
+   
+   teamSubsetFinal_reorder <- teamSubsetFinal[ , col_order]
+   
+   userDataRaw <- teamSubsetFinal_reorder %>%
+     mutate(across(is.numeric, round, 2)) 
+     
+   
+ })
+ 
+ #Display dataframe in table
+ output$userData <- renderDataTable({
+   datatable(userDataSet(), options = list(scrollX = TRUE))
+ })
+ 
+ #Download dataframe
+ output$downloadData <- downloadHandler(
+   filename = "test.csv",
+   content = function(file) {
+     write.csv(userDataSet(), file, row.names = FALSE)
+   }
+ )
 
 })
+

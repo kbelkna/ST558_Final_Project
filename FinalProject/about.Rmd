@@ -1,0 +1,45 @@
+---
+#title: "about"
+#author: "Kara Belknap"
+#date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# MLB Regular Season Winning Statistics
+
+## Purpose
+
+The purpose of this app is to explore how different statistics influence the success that an MLB team has in their regular season. Specifically, this app explores the proportion of games won as a function of different offensive and defensive statistics. 
+
+## About the Data
+
+```{r citation, include=FALSE}
+
+citation("Lahman")
+
+```
+
+The source of this data is the Lahman package, which can be easily installed in R using `install.packages("Lahman")`. 
+
+Friendly M, Dalzell C, Monkman M, Murphy D (2022). _Lahman: Sean 'Lahman' Baseball Database_. R package
+  version 10.0-1, <https://CRAN.R-project.org/package=Lahman>
+  
+This specific app uses the `Teams` data set, which includes regular season statistics as they relate to the specific teams.
+
+The following manipulations were made to the data:  
+
+  * The data is limited to the past 40 years and includes seasons from 1981-2021.  
+  * For simplification, when applicable, all data is included under a team's *current* franchise, league, and division as of the 2022 season. Notably:  
+    +  Data from the Montreal Expos (1981-2004) will appear under the Washington Nationals franchise.  
+    +  Two teams changed leagues during this period. The Houston Astros (NL to AL in 2013) and Milwaukee Brewers (AL to NL in 1998) will be found under their current respective leagues as of the 2022 season.  
+    +  All division information will also be under the franchise's current league and division as of the 2022 seasons.  
+    +  Teams that changed names will be found under their *current* name as of the 2022 season. The exception to this is that the Los Angeles Angels of Anaheim has been shorted to Los Angeles Angels for display purposes.  
+    +  Four new teams joined the MLB during this period. Colorado Rockies & Miami Marlins joined the league in 1993 and Tampa Bay Rays and Arizona Diamondbacks joined the league in 1998. There will be less data for these teams.  
+  * Special Seasons of Note:  
+    +  Seasons were shorter in 1981, 1994, and 1995 due to strikes. Consequently there was no postseason held in 1994, so there was no World Series Winner or League Champions for that year.  
+    +  The 2020 season was abbreviated due to the Covid-19 pandemic. Games were played without fans in attendance. Therefore attendance data for the 2020 season has been excluded from this analysis.  
+      
