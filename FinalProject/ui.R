@@ -20,25 +20,27 @@ dashboardPage(skin = "blue",
   dashboardSidebar(sidebarMenu(
     menuItem("About", tabName = "About", icon = icon("baseball")),
     menuItem("Data Exploration", tabName = "EDA", icon = icon("medal")), 
-    menuItem("Modeling", tabName = "Modeling", icon = icon("ranking-star"))), 
-    menuItem("Data Manipulation", tabName = "Data", icon = icon("baseball-bat-ball"))),
-
+    menuItem("Modeling", tabName = "Modeling", icon = icon("ranking-star")), 
+    menuItem("Data Manipulation", tabName = "Data", icon = icon("baseball-bat-ball"))
+    )
+    ),
   dashboardBody(
-  
-    dashboardBody(
-    
-        tabItems(
-        
-       #About tab
+    tabItems(
+        #About tab
         tabItem(tabName = "About",
-                h2("About")
+                box(
+                  #show MLB logo
+                  HTML('<center><img src="mlbLogo.png" width="200"></center>'),
+                  #output markdown file
+                  uiOutput('mymarkdown'),
+                  width = 8
+                )
         ),
-
         #EDA Tab
         tabItem(tabName = "EDA",
                 fluidRow(
                   box(
-                    title = "Exploratory Data Analysis",
+                    title = h3("Exploratory Data Analysis"),
                     selectInput("stat", "Select Data to Display", choices = c("Offensive Stats" = "offStat", 
                                                                               "Defensive Stats" = "defStat", 
                                                                               "Franchise Performance" = "frPer", 
@@ -82,26 +84,60 @@ dashboardPage(skin = "blue",
                                      radioButtons("div", "Select Franchise's Current League", 
                                                   choices = c("East", "Central", "West"), 
                                                   selected = "East")),
-                    
-                    
                     width=12
-                  )),
+                    )
+                  ),
                  fluidRow(
-                  box(plotOutput("plot1")),
-                  
-                  box(dataTableOutput("table1"))
-
-              )
-        ),
-        
+                  box(plotOutput("plot1"), width = 6),
+                  box(dataTableOutput("table1"), width = 6)
+                  )
+                ),
         tabItem(tabName = "Modeling",
                 h2("Modeling Info!")
-        ),
-        
-        tabItem(tabName = "Data",
-                h2("Data Content!")
+                ),
+        tabItem(tabName = "Data", 
+                   sidebarLayout(
+                     sidebarPanel(
+                       fluidRow(
+                         h3("Data Set Subsetting Options"),
+                         checkboxGroupInput("userStat", "Select Data to Display", 
+                                            choices = c("Offensive Stats" = "userOff",
+                                                        "Defensive Stats" = "userDef", 
+                                                        "Franchise Performance" = "frPer1", 
+                                                        "Frachise Summaries" = "frSum1")),
+                         h3("Data Set Filtering Options"),
+                         checkboxInput("userTeamSelect", "Click to Filter Data by Team", 
+                                       value = FALSE), 
+                         conditionalPanel(condition = "input.userTeamSelect == true",  
+                                          selectInput("userTeam", "Select MLB Franchise", 
+                                          choices = levels(as.factor(teamSubsetFinal$team)), 
+                                          selected = "St. Louis Cardinals")),
+                         checkboxInput("userYrSelect", "Click to Filter Data by Year", 
+                                       value = FALSE),
+                         conditionalPanel(condition = "input.userYrSelect == true", 
+                                          sliderInput("userYrSlider", "Select MLB Seasons",
+                                          min = 1981, 
+                                          max = 2021, 
+                                          value = c(1981, 2021), 
+                                          sep = '')),
+                         h3("Download Data to .csv"),
+                             downloadButton("downloadData", "Download"), 
+                             width = 12)
+                       ),
+                     # Show the table
+                     mainPanel(
+                       fluidRow(
+                       box(
+                         dataTableOutput("userData"), width = 12)
+                       )
+                       )
+                     )
+                )
         )
-      )
     )
-  ))
+  )
+
+
+
+
     
