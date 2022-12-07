@@ -20,7 +20,7 @@ data("Teams")
 
 #Narrow Data down to 1981-2021
 teamsSubset <- Teams %>%
-  filter(yearID>1980) 
+  filter(yearID>1980 & yearID<2022) 
 
 #Changing all Angels teams to "Los Angeles Angels"
 teamsSubset$name[teamsSubset$name == "California Angels"] <- "Los Angeles Angels"
@@ -80,24 +80,27 @@ teamsSubset$divID[teamsSubset$franchID == "TEX"] <- "West"
 teamsSubset$divID[teamsSubset$franchID == "OAK"] <- "West"
 
 
-# rename lgID to currentLeague & name to team
-teamsSubset <- rename(teamsSubset, currentLeague = lgID,
-                      team = name)
+# rename lgID to league & name to team
+teamsSubset <- rename(teamsSubset, league = lgID,
+                      team = name, division = divID,
+                      fieldingPct = FP, 
+                      worldSeriesWin = WSWin, 
+                      leagueWin = LgWin)
 
 #adding new columns
 teamSubsetMutate <- teamsSubset %>%
-  mutate(winPct = W/(W+L)*100, 
-         rpg = R/G, 
-         hpg = H/G,
-         tbpg = ((H + X2B + 2*X3B + 3*HR)/G), 
-         hrpg = HR/G,
-         bbpg = BB/G,
-         avgAttendance = attendance/Ghome, 
-         rapg = RA/G,
-         hapg = HA/G,
-         hrapg = HRA/G,
-         bbapg = BBA/G,
-         epg = E/G)
+  mutate(pctGamesWon = W/(W+L)*100, 
+         avgRunsScored = R/G, 
+         avgHits = H/G,
+         avgTotalBases = ((H + X2B + 2*X3B + 3*HR)/G), 
+         avgHomeRuns = HR/G,
+         avgWalks = BB/G,
+         avgRunsAllowed = RA/G,
+         avgHitsAllowed = HA/G,
+         avgHomeRunsAllowed = HRA/G,
+         avgWalksAllowed = BBA/G,
+         avgErrors = E/G) %>%
+  rename(year = yearID)
 
 #removing columns that won't be used in final analysis
 teamSubsetFinal <- teamSubsetMutate %>%
@@ -107,6 +110,21 @@ teamSubsetFinal <- teamSubsetMutate %>%
          -teamIDretro, -Rank, -CG, -Ghome, -teamID, 
          -ER, -CG, -SHO, -SV, -SOA, -R, -H, -HR, -BB,
          -RA, -HA, -HRA, -BBA, -E, -park, -G, -attendance)
+
+col_order <- c("year", "league", "division",
+               "team", "pctGamesWon", "avgRunsScored", "avgHits", 
+               "avgTotalBases", "avgHomeRuns", "avgWalks", "avgRunsAllowed", 
+               "ERA", "avgHitsAllowed", "avgHomeRunsAllowed", "avgWalksAllowed", 
+               "avgErrors", "fieldingPct", "leagueWin", "worldSeriesWin")
+
+teamSubsetFinal_reorder <- teamSubsetFinal[ , col_order]
+
+userDataRaw <- teamSubsetFinal_reorder %>%
+  mutate(across(is.numeric, round, 2)) 
+
+
+
+
 
 # Define server logic 
 shinyServer(function(input, output, session) {
@@ -125,124 +143,128 @@ shinyServer(function(input, output, session) {
    if(input$stat == "offStat") {
      
      offData <- teamSubsetFinal %>%
-       filter((yearID <= input$yrSliderO[2]) & (yearID >input$yrSliderO[1]))
+       filter((year <= input$yrSliderO[2]) & (year >input$yrSliderO[1]))
      
-     if(input$offense == "rpg") {
-      o1 <- ggplot(offData, aes(x = winPct, y = rpg))
-      o1 + geom_point(size = 2, aes(color = LgWin, shape = WSWin)) + 
+     if(input$offense == "avgRunsScored") {
+      o1 <- ggplot(offData, aes(x = pctGamesWon, y = avgRunsScored))
+      o1 + geom_point(size = 2, aes(color = leagueWin, shape = worldSeriesWin)) + 
         ggtitle("Runs Scored Per Game") + 
         theme(plot.title = element_text(size = 20, face = "bold", hjust = 0.5)) +
         scale_color_hue(h = c(240, 5)) + 
-        labs(x = "Proportion of Games Won", 
+        labs(x = "Percentage of Games Won", 
              y = "Average Runs Scored Per Game")
-     } else if(input$offense == "hpg") {
-       o2 <- ggplot(offData, aes(x = winPct, y = hpg))
-       o2 + geom_point(size = 2, aes(color = LgWin, shape = WSWin)) +
+     } else if(input$offense == "avgHits") {
+       o2 <- ggplot(offData, aes(x = pctGamesWon, y = avgHits))
+       o2 + geom_point(size = 2, aes(color = leagueWin, shape = worldSeriesWin)) +
          ggtitle("Hits Per Game") +
          theme(plot.title = element_text(size = 20, face = "bold", hjust = 0.5)) +
          scale_color_hue(h = c(240, 5)) +
-         labs(x = "Proportion of Games Won", 
+         labs(x = "Percentage of Games Won", 
               y = "Average Hits Per Game")
-     } else if(input$offense == "tbpg"){
-       o3 <- ggplot(offData, aes(x = winPct, y = tbpg))
-       o3 + geom_point(size = 2, aes(color = LgWin, shape = WSWin)) +
+     } else if(input$offense == "avgTotalBases"){
+       o3 <- ggplot(offData, aes(x = pctGamesWon, y = avgTotalBases))
+       o3 + geom_point(size = 2, aes(color = leagueWin, shape = worldSeriesWin)) +
          ggtitle("Total Bases Per Game") + 
          theme(plot.title = element_text(size = 20, face = "bold", hjust = 0.5)) +
          scale_color_hue(h = c(240, 5)) +
-         labs(x = "Proportion of Games Won", 
+         labs(x = "Percentage of Games Won", 
               y = "Total Bases Per Game")
-     } else if(input$offense == "hrpg") {
-       o4 <- ggplot(offData, aes(x = winPct, y = hrpg))
-       o4 + geom_point(size = 2, aes(color = LgWin, shape = WSWin)) + 
+     } else if(input$offense == "avgHomeRuns") {
+       o4 <- ggplot(offData, aes(x = pctGamesWon, y = avgHomeRuns))
+       o4 + geom_point(size = 2, aes(color = leagueWin, shape = worldSeriesWin)) + 
          ggtitle("Home Runs Per Game") + 
          theme(plot.title = element_text(size = 20, face = "bold", hjust = 0.5)) +
          scale_color_hue(h = c(240, 5)) +
-         labs(x = "Proportion of Games Won", 
+         labs(x = "Percentage of Games Won", 
               y = "Home Runs Per Game")
-     } else if(input$offense == "bbpg") {
-       o5 <- ggplot(offData, aes(x = winPct, y = bbpg))
-       o5 + geom_point(size = 2, aes(color = LgWin, shape = WSWin)) +
+     } else if(input$offense == "avgWalks") {
+       o5 <- ggplot(offData, aes(x = pctGamesWon, y = avgWalks))
+       o5 + geom_point(size = 2, aes(color = leagueWin, shape = worldSeriesWin)) +
          ggtitle("Walks Per Game") +
          theme(plot.title = element_text(size = 20, face = "bold", hjust = 0.5)) +
          scale_color_hue(h = c(240, 5)) +
-         labs(x = "Proportion of Games Won", 
+         labs(x = "Percentage of Games Won", 
               y = "Walks Per Game")
      }
       
    } else if(input$stat == "defStat") {
     
      defData <- teamSubsetFinal %>%
-       filter((yearID <= input$yrSliderD[2]) & (yearID >input$yrSliderD[1]))
+       filter((year <= input$yrSliderD[2]) & (year >input$yrSliderD[1]))
     
-       if (input$defense == "rapg") {
-         d1 <- ggplot(defData, aes(x = winPct, y = rapg))
-         d1 + geom_point(size = 2, aes(color = LgWin, shape = WSWin)) +
+       if (input$defense == "avgRunsAllowed") {
+         d1 <- ggplot(defData, aes(x = pctGamesWon, y = avgRunsAllowed))
+         d1 + geom_point(size = 2, aes(color = leagueWin, shape = worldSeriesWin)) +
            ggtitle("Runs Allowed Per Game") + 
            theme(plot.title = element_text(size = 20, face = "bold", hjust = 0.5)) +
            scale_color_hue(h = c(240, 5)) +
-           labs(x = "Proportion of Games Won", 
+           labs(x = "Percentage of Games Won", 
                 y = "Runs Allowed Per Game")
        } else if(input$defense == "ERA") {
-         d2 <- ggplot(defData, aes(x=winPct, y = ERA))
-         d2 + geom_point(size = 2, aes(color = LgWin, shape = WSWin)) +
+         d2 <- ggplot(defData, aes(x=pctGamesWon, y = ERA))
+         d2 + geom_point(size = 2, aes(color = leagueWin, shape = worldSeriesWin)) +
            ggtitle("ERA") + 
            theme(plot.title = element_text(size = 20, face = "bold", hjust = 0.5)) +
            scale_color_hue(h = c(240, 5)) +
-           labs(x = "Proportion of Games Won", 
+           labs(x = "Percentage of Games Won", 
                 y = "ERA")
-       } else if(input$defense == "hapg") {
-         d3 <- ggplot(defData, aes(x=winPct, y = hapg))
-         d3 + geom_point(size = 2, aes(color = LgWin, shape = WSWin)) + 
+       } else if(input$defense == "avgHitsAllowed") {
+         d3 <- ggplot(defData, aes(x=pctGamesWon, y = avgHitsAllowed))
+         d3 + geom_point(size = 2, aes(color = leagueWin, shape = worldSeriesWin)) + 
            ggtitle("Hits Allowed Per Game") + 
            theme(plot.title = element_text(size = 20, face = "bold", hjust = 0.5)) +
            scale_color_hue(h = c(240, 5)) +
-           labs(x = "Proportion of Games Won", 
+           labs(x = "Percentage of Games Won", 
                 y = "Hits Allowed Per Game")
-       } else if(input$defense == "hrapg") {
-         d4 <- ggplot(defData, aes(x=winPct, y = hrapg))
-         d4 + geom_point(size = 2, aes(color = LgWin, shape = WSWin)) + 
+       } else if(input$defense == "avgHomeRunsAllowed") {
+         d4 <- ggplot(defData, aes(x=pctGamesWon, y = avgHomeRunsAllowed))
+         d4 + geom_point(size = 2, aes(color = leagueWin, shape = worldSeriesWin)) + 
            ggtitle("Home Runs Allowed Per Game") + 
            theme(plot.title = element_text(size = 20, face = "bold", hjust = 0.5)) +
            scale_color_hue(h = c(240, 5)) +
-           labs(x = "Proportion of Games Won", 
+           labs(x = "Percentage of Games Won", 
                 y = "Home Runs Allowed Per Game")
-       } else if(input$defense == "bbapg") {
-         d5 <- ggplot(defData, aes(x=winPct, y = bbapg))
-         d5 + geom_point(size = 2, aes(color = LgWin, shape = WSWin)) +
+       } else if(input$defense == "avgWalksAllowed") {
+         d5 <- ggplot(defData, aes(x=pctGamesWon, y = avgWalksAllowed))
+         d5 + geom_point(size = 2, aes(color = leagueWin, shape = worldSeriesWin)) +
            ggtitle("Walks Allowed Per Game") + 
            theme(plot.title = element_text(size = 20, face = "bold", hjust = 0.5)) +
            scale_color_hue(h = c(240, 5)) +
-           labs(x = "Proportion of Games Won", 
+           labs(x = "Percentage of Games Won", 
                 y = "Walks Allowed Per Game")
-       } else if(input$defense == "epg") {
-         d6 <- ggplot(defData, aes(x=winPct, y = epg))
-         d6 + geom_point(size = 2, aes(color = LgWin, shape = WSWin)) +
+       } else if(input$defense == "avgErrors") {
+         d6 <- ggplot(defData, aes(x=pctGamesWon, y = avgErrors))
+         d6 + geom_point(size = 2, aes(color = leagueWin, shape = worldSeriesWin)) +
            ggtitle("Errors Per Game") + 
            theme(plot.title = element_text(size = 20, face = "bold", hjust = 0.5)) +
            scale_color_hue(h = c(240, 5)) +
-           labs(x = "Proportion of Games Won", 
+           labs(x = "Percentage of Games Won", 
                 y = "Errors Per Game")
-       } else if(input$defense == "FP") {
-         d7 <- ggplot(defData, aes(x=winPct, y = FP))
-         d7 + geom_point(size = 2, aes(color = LgWin, shape = WSWin)) +
+       } else if(input$defense == "fieldingPct") {
+         d7 <- ggplot(defData, aes(x=pctGamesWon, y = fieldingPct))
+         d7 + geom_point(size = 2, aes(color = leagueWin, shape = worldSeriesWin)) +
            ggtitle("Fielding Percentage") + 
            theme(plot.title = element_text(size = 20, face = "bold", hjust = 0.5)) +
            scale_color_hue(h = c(240, 5)) +
-           labs(x = "Proportion of Games Won", 
+           labs(x = "Percentage of Games Won", 
                 y = "Fielding Percentage")
        }
          
    } else if(input$stat == "frPer") {
-     teamSubsetFinal2 <- teamSubsetFinal %>%
-       filter(team == input$perTeam)
      
-     n <- ggplot(teamSubsetFinal2, aes(x=yearID, y=winPct))
-     n + geom_line(color = "red") + 
-       geom_point(size = 4, aes(shape = WSWin, color = LgWin)) + 
-       labs(title = paste0("Proportion of Games Won by Year for ", teamSubsetFinal2$team),
+     
+      teamSubsetFinal2 <- teamSubsetFinal %>%
+        filter(team == input$perTeam)
+     
+      n <- ggplot(teamSubsetFinal2, aes(x=year, y=pctGamesWon))
+      n + geom_line(color = "red") + 
+        geom_point(size = 4, aes(shape = worldSeriesWin, color = leagueWin)) + 
+        theme(plot.title = element_text(size = 20, face = "bold", hjust = 0.5)) +
+        labs(title = paste0("Percentage of Games Won by Year for ", teamSubsetFinal2$team),
             x = "Year", 
-            y = "Proportion of Games Won")
-       } 
+            y = "Percentage of Games Won")
+     
+     } 
    else if (input$stat == "frSum") { 
      
      leagueVar <- input$lg
@@ -250,10 +272,14 @@ shinyServer(function(input, output, session) {
      
      frSumData <- teamSubsetFinal %>%
        group_by(team) %>%
-       filter(currentLeague == leagueVar & divID == divisionVar) 
+       filter(league == leagueVar & division == divisionVar) 
      
-     frSumPlot <- ggplot(data = frSumData, aes(x = team, y = winPct)) 
-     frSumPlot + geom_boxplot()
+     frSumPlot <- ggplot(data = frSumData, aes(x = team, y = pctGamesWon)) 
+     frSumPlot + geom_boxplot() + 
+       theme(plot.title = element_text(size = 20, face = "bold", hjust = 0.5)) +
+       labs(title = paste0("Percentage of Games Won from 1981 - 2021 for teams in the ", leagueVar, " ", divisionVar), 
+            x = "Team", 
+            y = "Percentage of Games Won by Season")
      
    }
  })
@@ -266,11 +292,11 @@ shinyServer(function(input, output, session) {
       offVar <- input$offense
      
       off1 <- teamSubsetFinal %>%
-         filter((yearID <= input$yrSliderO[2]) & (yearID >= input$yrSliderO[1])) %>%
-         mutate(across(c(offVar, winPct), round, 2)) %>%
-         select(yearID, WSWin, team, offVar, winPct) %>%
-         rename("Year" = yearID, "World Series Winner?" = WSWin, 
-                "Franchise Name" = team, "Proportion of Games Won" = winPct)
+         filter((year <= input$yrSliderO[2]) & (year >= input$yrSliderO[1])) %>%
+         mutate(across(c(offVar, pctGamesWon), round, 2)) %>%
+         select(year, worldSeriesWin, team, offVar, pctGamesWon) %>%
+         rename("Year" = year, "World Series Winner?" = worldSeriesWin, 
+                "Franchise Name" = team, "Percentage of Games Won" = pctGamesWon)
    
       datatable(off1, caption = htmltools::tags$caption(style = 'caption-side: top;
                                                 text-align: left;
@@ -283,11 +309,11 @@ shinyServer(function(input, output, session) {
       defVar <- input$defense
       
       def1 <- teamSubsetFinal %>%
-        filter((yearID <= input$yrSliderD[2]) & (yearID >= input$yrSliderD[1])) %>%
-        mutate(across(c(defVar, winPct), round, 2)) %>%
-        select(yearID, WSWin, team, defVar, winPct) %>%
-        rename("Year" = yearID, "World Series Winner?" = WSWin, 
-               "Franchise Name" = team, "Proportion of Games Won" = winPct)
+        filter((year <= input$yrSliderD[2]) & (year >= input$yrSliderD[1])) %>%
+        mutate(across(c(defVar, pctGamesWon), round, 2)) %>%
+        select(year, worldSeriesWin, team, defVar, pctGamesWon) %>%
+        rename("Year" = year, "World Series Winner?" = worldSeriesWin, 
+               "Franchise Name" = team, "Percentage of Games Won" = pctGamesWon)
       
       datatable(def1, caption = htmltools::tags$caption(style = 'caption-side: top;
                                                 text-align: left;
@@ -301,11 +327,11 @@ shinyServer(function(input, output, session) {
     
       per1 <- teamSubsetFinal %>%
         filter(team == teamVar) %>%
-        mutate(across(c(winPct), round, 2)) %>%
-        select(team, yearID, WSWin, winPct) %>%
-        arrange(desc(winPct)) %>%
-        rename("Year" = yearID, "World Series Winner?" = WSWin, 
-             "Franchise Name" = team, "Proportion of Games Won" = winPct)
+        mutate(across(c(pctGamesWon), round, 2)) %>%
+        select(team, year, worldSeriesWin, pctGamesWon) %>%
+        arrange(desc(pctGamesWon)) %>%
+        rename("Year" = year, "World Series Winner?" = worldSeriesWin, 
+             "Franchise Name" = team, "Percentage of Games Won" = pctGamesWon)
     
       datatable(per1, caption = htmltools::tags$caption(style = 'caption-side: top;
                                                 text-align: left;
@@ -318,11 +344,11 @@ shinyServer(function(input, output, session) {
 
       teamWLSummary <- teamSubsetFinal %>%
         group_by(team) %>%
-        filter((currentLeague == lgVar)) %>%
-        mutate(winningSeason = ifelse(winPct > 0.5, 1, 0), 
-              losingSeason = ifelse(winPct <= 0.5, 1, 0), 
-              worldSeries = ifelse(WSWin == "Y", 1, 0), 
-              leagueW = ifelse(LgWin == "Y", 1, 0)) %>%
+        filter((league == lgVar)) %>%
+        mutate(winningSeason = ifelse(pctGamesWon > 50, 1, 0), 
+              losingSeason = ifelse(pctGamesWon <= 50, 1, 0), 
+              worldSeries = ifelse(worldSeriesWin == "Y", 1, 0), 
+              leagueW = ifelse(leagueWin == "Y", 1, 0)) %>%
         summarise(totalSeasons = sum(winningSeason, losingSeason),
                  winningSeasons = sum(winningSeason), 
                  losingSeasons = sum(losingSeason), 
@@ -344,18 +370,93 @@ shinyServer(function(input, output, session) {
    
 })
  
+ c("year", "league", "division",
+   "team", "pctGamesWon", "avgRunsScored", "avgHits", 
+   "avgTotalBases", "avgHomeRuns", "avgWalks", "avgRunsAllowed", 
+   "ERA", "avgHitsAllowed", "avgHomeRunsAllowed", "avgWalksAllowed", 
+   "avgErrors", "fieldingPct", "leagueWin", "worldSeriesWin")
+ 
+ 
+ 
  userDataSet <- reactive({
    
-   col_order <- c("yearID", "currentLeague", "divID",
-                  "team", "winPct", "rpg", "hpg", 
-                  "tbpg", "hrpg", "bbpg", "rapg", 
-                  "ERA", "hapg", "hrapg", "bbapg", 
-                  "epg", "FP", "avgAttendance", "LgWin", "WSWin")
+   simpleStats <- c("year", "league", "division",
+                    "team", "pctGamesWon", "leagueWin", "worldSeriesWin")
+   offStats <- c("avgRunsScored", "avgHits", 
+                 "avgTotalBases", "avgHomeRuns", "avgWalks")
+   defStats <- c("avgRunsAllowed", 
+                 "ERA", "avgHitsAllowed", "avgHomeRunsAllowed", "avgWalksAllowed", 
+                 "avgErrors", "fieldingPct")
    
-   teamSubsetFinal_reorder <- teamSubsetFinal[ , col_order]
-   
-   userDataRaw <- teamSubsetFinal_reorder %>%
-     mutate(across(is.numeric, round, 2)) 
+
+   if(input$userStat == "allStat") {
+     
+     userDataAll <- userDataRaw %>%
+       select(simpleStats, offStats, defStats)
+     
+      if(input$userTeamSelect == 'TRUE' & input$userYrSelect == 'TRUE') {
+        userDataAll2 <- userDataAll %>%
+          filter(team == input$userTeam & 
+                (year <= input$userYrSlider[2]) & (year >= input$userYrSlider[1]))
+        return(userDataAll2)
+      } else if(input$userTeamSelect == 'TRUE' & input$userYrSelect == 'FALSE') {
+        userDataAll3 <- userDataAll %>%
+          filter(team == input$userTeam)
+        return(userDataAll3)
+      } else if(input$userTeamSelect == 'FALSE' & input$userYrSelect == 'TRUE') {
+        userDataAll4 <- userDataAll %>%
+          filter((year <= input$userYrSlider[2]) & (year >= input$userYrSlider[1]))
+        return(userDataAll4)
+      } else {
+          return(userDataAll)
+      }
+     
+   } else if(input$userStat == "offStat") {
+     
+     userDataOff <- userDataRaw %>%
+       select(simpleStats, offStats)
+
+     if(input$userTeamSelect == 'TRUE' & input$userYrSelect == 'TRUE') {
+       userDataOff2 <- userDataOff %>%
+         filter(team == input$userTeam & 
+                  (year <= input$userYrSlider[2]) & (year >= input$userYrSlider[1]))
+       return(userDataOff2)
+     } else if(input$userTeamSelect == 'TRUE' & input$userYrSelect == 'FALSE') {
+       userDataOff3 <- userDataOff %>%
+         filter(team == input$userTeam)
+       return(userDataOff3)
+     } else if(input$userTeamSelect == 'FALSE' & input$userYrSelect == 'TRUE') {
+       userDataOff4 <- userDataAll %>%
+         filter((year <= input$userYrSlider[2]) & (year >= input$userYrSlider[1]))
+       return(userDataOff4)
+     } else {
+       return(userDataOff)
+     }
+     
+   } else if(input$userStat == "defStat") {
+     
+     userDataDef <- userDataRaw %>%
+       select(simpleStats, defStats)
+     
+     if(input$userTeamSelect == 'TRUE' & input$userYrSelect == 'TRUE') {
+       userDataDef2 <- userDataDef %>%
+         filter(team == input$userTeam & 
+                  (year <= input$userYrSlider[2]) & (year >= input$userYrSlider[1]))
+       return(userDataDef2)
+     } else if(input$userTeamSelect == 'TRUE' & input$userYrSelect == 'FALSE') {
+       userDataDef3 <- userDataDef %>%
+         filter(team == input$userTeam)
+       return(userDataDef3)
+     } else if(input$userTeamSelect == 'FALSE' & input$userYrSelect == 'TRUE') {
+       userDataDef4 <- userDataDef %>%
+         filter((year <= input$userYrSlider[2]) & (year >= input$userYrSlider[1]))
+       return(userDataDef4)
+     } else {
+       return(userDataDef)
+     }
+
+     
+   }
      
    
  })
