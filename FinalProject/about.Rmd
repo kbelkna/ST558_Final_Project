@@ -41,5 +41,5 @@ The following manipulations were made to the data:
     +  Four new teams joined the MLB during this period. Colorado Rockies & Miami Marlins joined the league in 1993 and Tampa Bay Rays and Arizona Diamondbacks joined the league in 1998. There will be less data for these teams.  
   * Special Seasons of Note:  
     +  Seasons were shorter in 1981, 1994, and 1995 due to strikes. Consequently there was no postseason held in 1994, so there was no World Series Winner or League Champions for that year.  
-    +  The 2020 season was abbreviated due to the Covid-19 pandemic. Games were played without fans in attendance. Therefore attendance data for the 2020 season has been excluded from this analysis.  
+    +  The 2020 season was abbreviated due to the Covid-19 pandemic. 
       
