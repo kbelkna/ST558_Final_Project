@@ -12,14 +12,15 @@ tidyverse, knitr, shiny, shinydashboard, DT, Lahman, and mathjaxr.
 
 Prior to running this app, you can load all of these packages using the following lines of code in your R Console:
 
-packages <- c("tidyverse", "knitr", "shiny", "shinydashboard", "DT", "Lahman", "mathjaxr")
+packages <- c("tidyverse", "knitr", "shiny", "shinydashboard", "DT", "Lahman", "mathjaxr", "caret")
+
 lapply(packages, library, character.only = TRUE)
 
 ## To Run This App
 
 Once the packages are loaded, you can run this app using the following code:
 
-shiny::runGitHub()
+shiny::runGitHub("ST558_Final_Project", "kbelkna", ref="FinalProject")
 
 
 
