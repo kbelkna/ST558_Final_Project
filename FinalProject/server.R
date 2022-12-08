@@ -19,7 +19,7 @@ library(caret)
 
 
 # Define server logic 
-shinyServer(function(input, output, session) {
+server <- shinyServer(function(input, output, session) {
   
   teamSubsetFinal <- read_csv("teamSubsetFinal.csv")
   userDataRaw <- read_csv("userDataRaw.csv")
