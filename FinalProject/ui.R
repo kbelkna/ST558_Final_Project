@@ -16,8 +16,11 @@ library(Lahman)
 library(mathjaxr)
 library(caret)
 
+teamSubsetFinal <- read_csv("teamSubsetFinal.csv")
+userDataRaw <- read_csv("userDataRaw.csv")
+
 # Define UI for application that draws a histogram
-dashboardPage(skin = "blue",
+ui <- dashboardPage(skin = "blue",
   dashboardHeader(title = "Baseball"),
   dashboardSidebar(sidebarMenu(
     menuItem("About", tabName = "About", icon = icon("baseball")),
