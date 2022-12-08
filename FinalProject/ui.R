@@ -13,6 +13,8 @@ library(shiny)
 library(shinydashboard)
 library(DT)
 library(Lahman)
+library(mathjaxr)
+library(caret)
 
 # Define UI for application that draws a histogram
 dashboardPage(skin = "blue",
@@ -93,7 +95,78 @@ dashboardPage(skin = "blue",
                   )
                 ),
         tabItem(tabName = "Modeling",
-                h2("Modeling Info!")
+                fluidRow(
+                  h3("coming soon"),
+                    tabBox(
+                      tabPanel("Model Info", "Information about Modeling",
+                               h3("All About Modeling"),
+                               p("Lots of Info coming soon"),
+                               uiOutput('ex3')),
+                      
+                      tabPanel("Modeling", "The Actual Models", 
+                               fluidRow(
+                                 box(
+                                   column(
+                                     h4("General Options"),
+                                   sliderInput("trDataProp", 
+                                               "Select Proportion of Data to Use for Training Model", 
+                                               min = 0.65, 
+                                               max = 0.85, 
+                                               value = 0.75, 
+                                               step = 0.05),
+                                   checkboxGroupInput("modelParams", "Select Predictors to Include in Modeling", 
+                                                      choices = c("Runs Per Game" = "avgRunsScored",
+                                                                  "Hits Per Game" = "avgHits",
+                                                                  "Total Bases Per Game" = "avgTotalBases",
+                                                                  "Home Runs Per Game" = "avgHomeRuns", 
+                                                                  "Walks Per Game" = "avgWalks", 
+                                                                  "Runs Allowed Per Game" = "avgRunsAllowed",
+                                                                  "Earned Runs Allowed (ERA)" = "ERA",
+                                                                  "Hits Allowed Per Game" = "avgHitsAllowed",
+                                                                  "Home Runs Allowed Per Game" = "avgHomeRunsAllowed", 
+                                                                  "Walks Allowed Per Game" = "avgWalksAllowed",
+                                                                  "Errors Per Game" = "avgErrors", 
+                                                                  "Fielding Percentage" = "fieldingPct"), 
+                                                      selected = "avgRunsScored"),
+                                   width = 3), 
+                                   column(
+                                     h4("Linear Options"), 
+                                     radioButtons("linearCV", "Linear Regression: Select 5-fold or 10-fold CV", 
+                                                  choices = c("5-fold" = "five", 
+                                                              "10-fold" = "ten"),
+                                                  selected = "five"
+                                                  ),
+                                     width = 3
+                                   ),
+                                   column(
+                                     h4("Boosted Tree Model Options"), 
+                                     radioButtons("tree1", "Linear Regression: Select 5-fold or 10-fold CV", 
+                                                  choices = c("5-fold" = "five", 
+                                                              "10-fold" = "ten"),
+                                                  selected = "five"
+                                     ),
+                                     width = 3
+                                   ),
+                                   column(
+                                     h4("Random Forest Model Options"), 
+                                     radioButtons("rf1", "Linear Regression: Select 5-fold or 10-fold CV", 
+                                                  choices = c("5-fold" = "five", 
+                                                              "10-fold" = "ten"),
+                                                  selected = "five"
+                                     ),
+                                     width = 3
+                                   ), 
+                                   width = 12)
+                                 ), 
+                               fluidRow( 
+                                 h3("Linear Model Ouput"),
+                                 box(dataTableOutput("lmTable2")), 
+                                 box(dataTableOutput("lmTable")
+                               )
+                               )
+                               ),
+                      tabPanel("Prediction", "Prediction Tab"), width = 12)
+                )
                 ),
         tabItem(tabName = "Data", 
                    sidebarLayout(
