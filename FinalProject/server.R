@@ -17,13 +17,13 @@ library(Lahman)
 library(mathjaxr)
 library(caret)
 
-
+teamSubsetFinal <- read_csv("teamSubsetFinal.csv")
+userDataRaw <- read_csv("userDataRaw.csv")
 
 # Define server logic 
 shinyServer(function(input, output, session) {
   
-  teamSubsetFinal <- read_csv("teamSubsetFinal.csv")
-  userDataRaw <- read_csv("userDataRaw.csv")
+
   
 #The following content is used for the about section:
   
