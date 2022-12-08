@@ -20,7 +20,7 @@ lapply(packages, library, character.only = TRUE)
 
 Once the packages are loaded, you can run this app using the following code:
 
-shiny::runGitHub("ST558_Final_Project", "kbelkna", ref="FinalProject")
+shiny::runGitHub("ST558_Final_Project", "kbelkna", subdir="FinalProject")
 
 
 
