@@ -266,68 +266,144 @@ server <- shinyServer(function(input, output, session) {
  
 #The following code is used by the modeling section:  
   
-  output$lmTable <- renderDataTable({
-
+  # Create and run linear model
+  lmOutput <- eventReactive(input$runModel, {
+    
     set.seed(555)
     modelingData <- teamSubsetFinal
-    trainIndex <- createDataPartition(modelingData$pctGamesWon, p = input$trDataProp, list = FALSE)
+    trainIndex <- createDataPartition(modelingData$pctGamesWon, p = isolate(input$trDataProp), list = FALSE)
     modelTrain <- modelingData[trainIndex, ]
     modelTest <- modelingData[-trainIndex, ]
     
-    predictorVars <- paste(input$modelParams, collapse = "+")
+    predictorVars <- paste(isolate(input$modelParams), collapse = "+")
+    
+    cvNumber <- ifelse(isolate(input$linearCV) == "five", 5, 10)
     
     lmFit = train(as.formula(paste('pctGamesWon ~', predictorVars)), data = modelTrain,
                   method="lm",
                   preProcess = c("center", "scale"),
-                  trControl = trainControl(method = "CV", number = 5))
-
-    metric_lm = postResample(pred = predict(lmFit, newdata = modelTest), 
-                             obs = modelTest$pctGamesWon)
-    
-    metric_lm_format <- data.frame(metric_lm) %>%
-      mutate(across(is.numeric, round, 3))
-    
-    datatable(metric_lm_format, caption = htmltools::tags$caption(style = 'caption-side: top;
-                                                text-align: left;
-                                                color:black;
-                                                font-size:20px;
-                                                font-weight: bold;', "Linear Model: Performance on Test Data"))
-    
-  })  
-  
-  
-  output$lmTable2 <- renderDataTable({
-    
-    proportion <- input$trDataProp
-    
-    set.seed(555)
-    modelingData <- teamSubsetFinal
-    trainIndex <- createDataPartition(modelingData$pctGamesWon, p = proportion, list = FALSE)
-    modelTrain <- modelingData[trainIndex, ]
-    modelTest <- modelingData[-trainIndex, ]
-    
-    predictorVars <- paste(input$modelParams, collapse = "+")
-    
-    lmFit = train(as.formula(paste('pctGamesWon ~', predictorVars)), data = modelTrain,
-                  method="lm",
-                  preProcess = c("center", "scale"),
-                  trControl = trainControl(method = "CV", number = 5))
-    
-    summary(lmFit)
+                  trControl = trainControl(method = "CV", number = cvNumber))
     
     lm_out = data.frame(lmFit$results)
     
     lm_out_format <- lm_out %>%
-      mutate(across(is.numeric, round, 3))
+      mutate_if(is.numeric, round, 3)
     
-    
-    datatable(lm_out_format, caption = htmltools::tags$caption(style = 'caption-side: top;
+    tableTrain <- datatable(lm_out_format, caption = htmltools::tags$caption(style = 'caption-side: top;
                                                 text-align: left;
                                                 color:black;
                                                 font-size:20px;
                                                 font-weight: bold;', "Linear Model: Performance on Training Data"))
     
+    lmResults = postResample(pred = predict(lmFit, newdata = modelTest), 
+                             obs = modelTest$pctGamesWon)
+    
+    
+    metric_lm_format <- data.frame(lmResults) %>%
+      mutate_if(is.numeric, round, 3)
+    
+    tableTest <- datatable(metric_lm_format, caption = htmltools::tags$caption(style = 'caption-side: top;
+                                                text-align: left;
+                                                color:black;
+                                                font-size:20px;
+                                                font-weight: bold;', "Linear Model: Performance on Test Data"))
+
+    list(modelTrain = modelTrain, modelTest = modelTest, lmFit = lmFit, tableTrain = tableTrain, tableTest = tableTest)
+    
+    
+  })
+  
+  #output table for training data
+  output$lmTableTrain <- renderDataTable({
+    
+     lmOutput()$tableTrain
+    
+    }) 
+  
+  #output table for test data
+  output$lmTableTest <- renderDataTable({
+    
+    lmOutput()$tableTest
+    
+  })  
+  
+ # Create and run tree model
+  treeOutput <- eventReactive(input$runModel, {
+    
+    predictorVars <- paste(isolate(input$modelParams), collapse = "+")
+    
+    cvNumber <- ifelse(isolate(input$tree1) == "five", 5, 10)
+
+    train.control = trainControl(method = "cv", number = cvNumber)
+    
+    trShrinkage <- ifelse(isolate(input$treeShrink) == "std", 0.1, 0.001)
+    
+  
+    tunG = expand.grid(n.trees = seq(25,isolate(input$treeN),25),
+                     interaction.depth = 1:isolate(input$treeMax),
+                     shrinkage = trShrinkage,
+                     n.minobsinnode = isolate(input$treeObs))
+  
+    gbmFit <- train(as.formula(paste('pctGamesWon ~', predictorVars)),
+                  data = lmOutput()$modelTrain,
+                  method = "gbm",
+                  preProcess = c("center","scale"),
+                  trControl = train.control,
+                  tuneGrid = tunG,
+                  verbose = FALSE
+  )
+  
+   gbm_out <- data.frame(gbmFit$results)
+    gbm_out <- gbm_out %>%
+      arrange(RMSE) %>%
+      mutate_if(is.numeric, round, 3)
+  
+    treeResults <- datatable(gbm_out, options = list(scrollX = TRUE), 
+                    caption = htmltools::tags$caption(style = 'caption-side: top;
+                                                text-align: left;
+                                                color:black;
+                                                font-size:20px;
+                                                font-weight: bold;', "Tree Model: Summary"))
+  
+    treePlot <- plot(gbmFit)
+  
+    gbm_pred <- predict(gbmFit, newdata = modelTest)
+    trResults <- postResample(gbm_pred, modelTest$pctGamesWon)
+    metric_boosting <- data.frame(trResults) %>%
+      round(3) 
+
+    treeTest <- datatable(metric_boosting, caption = htmltools::tags$caption(style = 'caption-side: top;
+                                                text-align: left;
+                                                color:black;
+                                                font-size:20px;
+                                                font-weight: bold;', "Tree Model: Performance on Training Data"))
+  
+    list(treeResults = treeResults, treePlot = treePlot, treeTest = treeTest)
+
+ })
+  
+  #output table for training data
+  output$treeResultsTable <- renderDataTable({
+    
+    treeOutput()$treeResults
+    
   }) 
+  
+  #output table for training data
+  output$treeResultsPlot <- renderPlot({
+    
+    treeOutput()$treePlot
+    
+  })
+  
+  #output table for test data
+  output$treeTest <- renderDataTable({
+    
+    treeOutput()$treeTest
+    
+  })  
+  
+  
   
   
   

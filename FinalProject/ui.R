@@ -101,7 +101,7 @@ ui <- dashboardPage(skin = "blue",
                                              h3("All About Modeling"),
                                              p("Lots of Info coming soon"),
                                              uiOutput('ex3')),
-                                    tabPanel("Modeling", "The Actual Models", 
+                                    tabPanel("Modeling",  
                                              fluidRow(
                                                box(
                                                  column(
@@ -127,17 +127,29 @@ ui <- dashboardPage(skin = "blue",
                                                    width = 3), 
                                                  column(
                                                    h4("Linear Options"), 
-                                                   radioButtons("linearCV", "Select 5-fold or 10-fold CV", 
+                                                   radioButtons("linearCV", "Select 5-fold or 10-fold cross-validation", 
                                                                 choices = c("5-fold" = "five", 
                                                                             "10-fold" = "ten"),
                                                                 selected = "five"),
                                                    width = 3),
                                                  column(
                                                    h4("Boosted Tree Model Options"), 
-                                                   radioButtons("tree1", "Linear Regression: Select 5-fold or 10-fold CV",
+                                                   radioButtons("tree1", "Select 5-fold or 10-fold cross-validation",
                                                                 choices = c("5-fold" = "five", 
                                                                             "10-fold" = "ten"),
                                                                 selected = "five"),
+                                                   radioButtons("treeShrink", "Tuning: Select shrinkage", 
+                                                                choices = c("0.1" = "std", 
+                                                                            "0.001" = "small"),
+                                                                selected = "std"),
+                                                   sliderInput("treeN", "Tuning: Select n.trees", 
+                                                               min = 100, max = 300, value = 200, step = 50), 
+
+                                                   sliderInput("treeMax", "Tuning: Select interaction.depth", 
+                                                              min = 3, max = 6, value = 4, step = 1), 
+                                                   sliderInput("treeObs", "Tuning: Select n.minobsinnode", 
+                                                              min = 5, max = 10, value = 10, step = 1),
+                                                   
                                                    width = 3),
                                                  column(
                                                    h4("Random Forest Model Options"), 
@@ -147,12 +159,33 @@ ui <- dashboardPage(skin = "blue",
                                                                 selected = "five"),
                                                    width = 3), 
                                                  width = 12)
-                                               ), 
+                                               ),
                                              fluidRow(
-                                               h3("Linear Model Ouput"),
-                                               box(dataTableOutput("lmTable2")), 
-                                               box(dataTableOutput("lmTable"))
-                                               )
+                                               box(
+                                                 actionButton("runModel", "Click Here to Run Models", 
+                                                              class = "btn-success"), 
+                                                 align = "center",
+                                                 width = 12)
+                                             ),
+                                             fluidRow(
+                                               box(
+                                               h3("Linear Model Ouput", align = "center"),
+                                               box(dataTableOutput("lmTableTrain")), 
+                                               box(dataTableOutput("lmTableTest")), 
+                                               width = 12
+                                               )),
+                                             fluidRow(
+                                               box(
+                                               h3("Tree Model Output", align = "center"), 
+                                               box(dataTableOutput("treeResultsTable"), width = 4), 
+                                               box(plotOutput("treeResultsPlot"), width = 4), 
+                                               box(dataTableOutput("treeTest"), width = 4), 
+                                               width = 12
+                                             )),
+                                             fluidRow(
+                                               h3("Random Forest Model Output", align = "center")
+                                             )
+                                             
                                              ),
                                     tabPanel("Prediction", "Prediction Tab"), width = 12)
                                   )
