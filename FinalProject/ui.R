@@ -15,6 +15,8 @@ library(DT)
 library(Lahman)
 library(mathjaxr)
 library(caret)
+library(randomForest)
+
 
 teamSubsetFinal <- read_csv("teamSubsetFinal.csv")
 userDataRaw <- read_csv("userDataRaw.csv")
@@ -157,6 +159,10 @@ ui <- dashboardPage(skin = "blue",
                                                                 choices = c("5-fold" = "five", 
                                                                             "10-fold" = "ten"),
                                                                 selected = "five"),
+                                                   radioButtons("rfMtry", "Tuning: mtry", 
+                                                                choices = c("2 (for fewer than 9 predictors)" = "two", 
+                                                                            "3 (for 9 or more predictors)" = "three"),
+                                                                selected = "two"),
                                                    width = 3), 
                                                  width = 12)
                                                ),
@@ -183,7 +189,11 @@ ui <- dashboardPage(skin = "blue",
                                                width = 12
                                              )),
                                              fluidRow(
-                                               h3("Random Forest Model Output", align = "center")
+                                               h3("Random Forest Model Output", align = "center"), 
+                                               box(dataTableOutput("rfResultsTable"), width = 4), 
+                                               box(plotOutput("rfPlot"), width = 4), 
+                                               box(dataTableOutput("rfTest"), width = 4), 
+                                               width = 12
                                              )
                                              
                                              ),

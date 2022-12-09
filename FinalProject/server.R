@@ -16,6 +16,7 @@ library(DT)
 library(Lahman)
 library(mathjaxr)
 library(caret)
+library(randomForest)
 
 
 # Define server logic 
@@ -277,12 +278,12 @@ server <- shinyServer(function(input, output, session) {
     
     predictorVars <- paste(isolate(input$modelParams), collapse = "+")
     
-    cvNumber <- ifelse(isolate(input$linearCV) == "five", 5, 10)
+    cvNumberLM <- ifelse(isolate(input$linearCV) == "five", 5, 10)
     
     lmFit = train(as.formula(paste('pctGamesWon ~', predictorVars)), data = modelTrain,
                   method="lm",
                   preProcess = c("center", "scale"),
-                  trControl = trainControl(method = "CV", number = cvNumber))
+                  trControl = trainControl(method = "CV", number = cvNumberLM))
     
     lm_out = data.frame(lmFit$results)
     
@@ -332,9 +333,9 @@ server <- shinyServer(function(input, output, session) {
     
     predictorVars <- paste(isolate(input$modelParams), collapse = "+")
     
-    cvNumber <- ifelse(isolate(input$tree1) == "five", 5, 10)
+    cvNumberTree <- ifelse(isolate(input$tree1) == "five", 5, 10)
 
-    train.control = trainControl(method = "cv", number = cvNumber)
+    train.control = trainControl(method = "cv", number = cvNumberTree)
     
     trShrinkage <- ifelse(isolate(input$treeShrink) == "std", 0.1, 0.001)
     
@@ -402,6 +403,104 @@ server <- shinyServer(function(input, output, session) {
     treeOutput()$treeTest
     
   })  
+  
+  
+  # Create and run tree model
+  rfOutput <- eventReactive(input$runModel, {
+    
+    predictorVars <- paste(isolate(input$modelParams), collapse = "+")
+    
+    cvNumberRF <- ifelse(isolate(input$rf1) == "five", 5, 10)
+    
+    mtryRF <- ifelse(isolate(input$rfMtry) == "two", 2, 3)
+    
+    train.control = trainControl(method = "cv", number = cvNumberRF)
+    
+    rfFit <- train(as.formula(paste('pctGamesWon ~', predictorVars)),
+                   data = modelTrain,
+                   method = "rf",
+                   trControl = train.control,
+                   preProcess = c("center","scale"),
+                   tuneGrid = data.frame(mtry = 1:mtryRF))
+    
+    rf_out = data.frame(rfFit$results)
+    rf_out <- rf_out %>%
+      mutate_if(is.numeric, round, 3)
+    
+    rfTrainTable <- datatable(rf_out, options = list(scrollX = TRUE), 
+                              caption = htmltools::tags$caption(style = 'caption-side: top;
+                                                text-align: left;
+                                                color:black;
+                                                font-size:20px;
+                                                font-weight: bold;', "Random Forest Model: Performance on Training Data"))
+    
+    RandomForestFit <- randomForest(as.formula(paste('pctGamesWon ~', predictorVars)), 
+                                    data = modelTrain, ntree = 500, importance = TRUE)
+    
+    RF_pred <- predict(rfFit, newdata = modelTest)
+    metric_rf = postResample(RF_pred, modelTest$pctGamesWon)
+    metric_rf <- data.frame(metric_rf) %>%
+      mutate_if(is.numeric, round, 3)
+    
+    rfTestTable <- datatable(metric_rf, caption = htmltools::tags$caption(style = 'caption-side: top;
+                                                text-align: left;
+                                                color:black;
+                                                font-size:20px;
+                                                font-weight: bold;', "Tree Model: Performance on Test Data"))
+    
+    list(rfTrainTable = rfTrainTable, RandomForestFit = RandomForestFit, rfTestTable = rfTestTable)
+    
+  })
+  
+  #output table for training data
+  output$rfResultsTable <- renderDataTable({
+    
+    rfOutput()$rfTrainTable
+    
+  }) 
+  
+  #output table for training data
+  output$rfPlot <- renderPlot({
+    
+    varImpPlot(rfOutput()$RandomForestFit, type = 1, main = "Variable Importance")
+    
+  })
+  
+  #output table for test data
+  output$rfTest <- renderDataTable({
+    
+    rfOutput()$rfTestTable
+    
+  })  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
   
   
   
