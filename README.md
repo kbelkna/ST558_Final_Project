@@ -8,11 +8,11 @@ The purpose of this R Shiny app is to investigate how different offensive and de
 ## Packages Used
 
 The following packages were used in the development of this package:
-tidyverse, knitr, shiny, shinydashboard, DT, Lahman, and mathjaxr.
+tidyverse, knitr, shiny, shinydashboard, DT, mathjaxr, caret, and randomForest.
 
 Prior to running this app, you can load all of these packages using the following lines of code in your R Console:
 
-packages <- c("tidyverse", "knitr", "shiny", "shinydashboard", "DT", "Lahman", "mathjaxr", "caret")
+packages <- c("tidyverse", "knitr", "shiny", "shinydashboard", "DT", "mathjaxr", "caret", "randomForest")
 
 lapply(packages, library, character.only = TRUE)
 
