@@ -23,12 +23,12 @@ userDataRaw <- read_csv("userDataRaw.csv")
 
 # Define UI for application that draws a histogram
 ui <- dashboardPage(skin = "red",
-                    dashboardHeader(title = "Baseball"),
+                    dashboardHeader(title = "MLB Modeling"),
                     dashboardSidebar(sidebarMenu(
                       menuItem("About", tabName = "About", icon = icon("baseball")),
                       menuItem("Data Exploration", tabName = "EDA", icon = icon("medal")), 
                       menuItem("Modeling", tabName = "Modeling", icon = icon("ranking-star")), 
-                      menuItem("Data Manipulation", tabName = "Data", icon = icon("baseball-bat-ball"))
+                      menuItem("Data Output", tabName = "Data", icon = icon("baseball-bat-ball"))
                       )
                       ),
                     dashboardBody(
@@ -98,15 +98,15 @@ ui <- dashboardPage(skin = "red",
                         tabItem(tabName = "Modeling",
                                 fluidRow(
                                   tabBox(
-                                    tabPanel("Modeling Info", "Information about Modeling",
-                                             h3("All About Modeling"),
+                                    tabPanel("Modeling Info", 
+                                             h3("Regression Modeling Overview"),
                                              p("Lots of Info coming soon"),
                                              uiOutput('ex3')),
                                     tabPanel("Modeling Output",  
                                              fluidRow(
                                                box(
                                                h4("Instructions"), 
-                                               p("This page will model proportion of games won based on user-defined 
+                                               p("This page will model the proportion of games won based on selected 
                                                  variables and modeling settings. Please use the button 'Click Here 
                                                  to Run Models' once the desired options have been selected."), 
                                                width = 12
@@ -161,7 +161,7 @@ ui <- dashboardPage(skin = "red",
                                                    width = 3),
                                                  column(
                                                    h4("Random Forest Model Options"), 
-                                                   radioButtons("rf1", "Linear Regression: Select 5-fold or 10-fold CV", 
+                                                   radioButtons("rf1", "Select 5-fold or 10-fold CV", 
                                                                 choices = c("5-fold" = "five", 
                                                                             "10-fold" = "ten"),
                                                                 selected = "five"),
@@ -182,7 +182,7 @@ ui <- dashboardPage(skin = "red",
                                              ),
                                              fluidRow(
                                                box(
-                                               h3("Logistic Model Ouput", align = "center"),
+                                               h3("Logistic Regression Model Ouput", align = "center"),
                                                box(dataTableOutput("glmTableTrain")), 
                                                box(dataTableOutput("glmTableTest")), 
                                                width = 12
