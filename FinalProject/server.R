@@ -277,6 +277,12 @@ server <- shinyServer(function(input, output, session) {
     predInput$sel
   })
   
+  output$predDF <- renderTable({
+    predInput$sel
+    
+  })
+  
+  
   # Create and run glm model
   glmOutput <- eventReactive(input$runModel, {
     
@@ -491,9 +497,25 @@ server <- shinyServer(function(input, output, session) {
   
   output$prediction <- renderDataTable({
     
-    valuesPredg <- data.frame(avgRunsScored = input$ARS, avgRunsAllowed = input$ARA, avgErrors = input$AE, 
-                              avgWalks = input$AW)
-    predictedProportion <- predict(glmOutput()$glmFit, newdata = valuesPredg)
+    dataTest <- data.frame(params = c("avgRunsScored", "avgHits", "avgTotalBases", "avgHomeRuns",
+                                      "avgWalks", "avgRunsAllowed", "ERA", "avgHitsAllowed", "avgHomeRunsAllowed",
+                                      "avgWalksAllowed", "avgErrors", "fieldingPct"), 
+                           inputs = c(input$ARS, input$AH, input$ATB, 
+                                      input$AHR, input$AW, input$ARA, 
+                                      input$PERA, input$AHA, input$AHRA, 
+                                      input$AWA, input$AE, input$AFP))
+    
+    
+    dataSimple <- input$modelParams
+    dataSimpleDF <- data.frame(dataSimple)
+    colnames(dataSimpleDF) <- c("params")
+    
+    final <- dataTest %>% 
+      inner_join(dataSimpleDF,by="params")
+    
+    predFinalDF <- spread(final, params, inputs)
+    
+    predictedProportion <- predict(glmOutput()$glmFit, newdata = predFinalDF)
     
     predictedProportion2 <- data.frame(predictedProportion) %>%
       mutate_if(is.numeric, round, 3) 
@@ -512,24 +534,7 @@ server <- shinyServer(function(input, output, session) {
   })  
   
   
-
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
+ 
   
   
   
