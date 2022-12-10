@@ -264,7 +264,22 @@ server <- shinyServer(function(input, output, session) {
     })
  
 #The following code is used by the modeling section:  
-
+  
+  #The following section documents mathjax functions needed for the modeling info section.
+  output$math1 <- renderUI({
+    withMathJax(
+      helpText('Logistic Regression
+              $$P = \\frac{e^{\\beta_0 + \\beta_1x}}{1 + e^{\\beta_0 + \\beta_1x}}$$'
+      ))
+  })
+  
+  output$math2 <- renderUI({
+    withMathJax(
+      helpText('m
+               $$m = \\frac{p}{3}$$'
+    ))
+  })
+  
   #capture predictor variables used, store for later use.
   predInput <- reactiveValues(sel = NULL)
   
@@ -280,11 +295,6 @@ server <- shinyServer(function(input, output, session) {
     predInput$sel
     
   })
-  
-  
-  
-  
-  
   
   # Create and run glm model
   glmOutput <- eventReactive(input$runModel, {
@@ -318,7 +328,7 @@ server <- shinyServer(function(input, output, session) {
                                                 text-align: left;
                                                 color:black;
                                                 font-size:20px;
-                                                font-weight: bold;', "Logistic Model: Performance on Training Data"))
+                                                font-weight: bold;', "GLM: Performance on Training Data"))
     
     glmResults = postResample(pred = predict(glmFit, newdata = modelTest), 
                               obs = modelTest$propGamesWon)
@@ -331,25 +341,19 @@ server <- shinyServer(function(input, output, session) {
                                                 text-align: left;
                                                 color:black;
                                                 font-size:20px;
-                                                font-weight: bold;', "Logistic Model: Performance on Test Data"))
+                                                font-weight: bold;', "GLM: Performance on Test Data"))
     
     list(modelTrain = modelTrain, modelTest = modelTest, glmFit = glmFit, tableTrain = tableTrain, tableTest = tableTest)
-    
-    
   })
   
   #output table for training data
   output$glmTableTrain <- renderDataTable({
-    
     glmOutput()$tableTrain
-    
   }) 
   
   #output table for test data
   output$glmTableTest <- renderDataTable({
-    
     glmOutput()$tableTest
-    
   })  
   
   # Create and run tree model
@@ -417,23 +421,17 @@ server <- shinyServer(function(input, output, session) {
   
   #output table for training data
   output$treeResultsTable <- renderDataTable({
-    
     treeOutput()$treeResults
-    
   }) 
   
   #output table for training data
   output$treeResultsPlot <- renderPlot({
-    
     treeOutput()$treePlot
-    
   })
   
   #output table for test data
   output$treeTest <- renderDataTable({
-    
     treeOutput()$treeTest
-    
   })  
   
   
@@ -495,33 +493,23 @@ server <- shinyServer(function(input, output, session) {
   
   #output table for training data
   output$rfResultsTable <- renderDataTable({
-    
     rfOutput()$rfTrainTable
-    
   }) 
   
   #output table for training data
   output$rfPlot <- renderPlot({
-    
     varImpPlot(rfOutput()$RandomForestFit, type = 1, main = "Variable Importance")
-    
   })
   
   #output table for test data
   output$rfTest <- renderDataTable({
-    
     rfOutput()$rfTestTable
-    
   })  
   
-  
-  
-
-  
-  
-  
+  #The following is used for the prediction tab.
   output$prediction <- renderDataTable({
     
+    #create dataset with all variables 
     dataTest <- data.frame(params = c("avgRunsScored", "avgHits", "avgTotalBases", "avgHomeRuns",
                                       "avgWalks", "avgRunsAllowed", "ERA", "avgHitsAllowed", "avgHomeRunsAllowed",
                                       "avgWalksAllowed", "avgErrors", "fieldingPct"), 
@@ -530,31 +518,36 @@ server <- shinyServer(function(input, output, session) {
                                       input$PERA, input$AHA, input$AHRA, 
                                       input$AWA, input$AE, input$AFP))
     
-    
+    #coerce input$modelParams into a dataframe
     dataSimple <- input$modelParams
     dataSimpleDF <- data.frame(dataSimple)
     colnames(dataSimpleDF) <- c("params")
     
+    #join dataTest and dataSimple (inner join based on parameters in input$modelParams)
     final <- dataTest %>% 
       inner_join(dataSimpleDF,by="params")
     
+    #coerce data into wide formate
     predFinalDF <- spread(final, params, inputs)
     
+    #predict proportion
     predictedProportion <- predict(glmOutput()$glmFit, newdata = predFinalDF)
     
+    #manipulate data
     predictedProportion2 <- data.frame(predictedProportion) %>%
       mutate_if(is.numeric, round, 3) 
-    
     bigtable <- data.frame(predictedProportion2)
     
+    #create datatable output
     datatable(bigtable, options = list(dom = 't', 
                                        columnDefs = list(list(className = 'dt-center', targets = "_all"))), 
                                        rownames = FALSE, 
-                    caption = htmltools::tags$caption(style = 'caption-side: top;
-                                                              text-align: left;
-                                                              color:black;
-                                                              font-size:20px;
-                                                              font-weight: bold;', "Predicted Proportion of Games Won"))
+                                       caption = htmltools::tags$caption(style = 'caption-side: top;
+                                                                          text-align: left;
+                                                                          color:black;
+                                                                          font-size:20px;
+                                                                          font-weight: bold;', 
+                                                                          "Predicted Proportion of Games Won"))
   
   })  
   
@@ -654,13 +647,9 @@ server <- shinyServer(function(input, output, session) {
    }
  )
 
- output$ex3 <- renderUI({
-   withMathJax(
-     helpText('The busy Cauchy distribution
-               $$\\frac{1}{\\pi\\gamma\\,\\left[1 +
-               \\left(\\frac{x-x_0}{\\gamma}\\right)^2\\right]}\\!$$'))
- })
+
  
+
  
  
 })
