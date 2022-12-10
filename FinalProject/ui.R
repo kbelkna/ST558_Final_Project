@@ -128,8 +128,8 @@ ui <- dashboardPage(skin = "blue",
                                                               selected = "avgRunsScored"),
                                                    width = 3), 
                                                  column(
-                                                   h4("Linear Options"), 
-                                                   radioButtons("linearCV", "Select 5-fold or 10-fold cross-validation", 
+                                                   h4("Logistic Regression Options"), 
+                                                   radioButtons("glmCV", "Select 5-fold or 10-fold cross-validation", 
                                                                 choices = c("5-fold" = "five", 
                                                                             "10-fold" = "ten"),
                                                                 selected = "five"),
@@ -146,7 +146,6 @@ ui <- dashboardPage(skin = "blue",
                                                                 selected = "std"),
                                                    sliderInput("treeN", "Tuning: Select n.trees", 
                                                                min = 100, max = 300, value = 200, step = 50), 
-
                                                    sliderInput("treeMax", "Tuning: Select interaction.depth", 
                                                               min = 3, max = 6, value = 4, step = 1), 
                                                    sliderInput("treeObs", "Tuning: Select n.minobsinnode", 
@@ -160,7 +159,8 @@ ui <- dashboardPage(skin = "blue",
                                                                             "10-fold" = "ten"),
                                                                 selected = "five"),
                                                    radioButtons("rfMtry", "Tuning: mtry", 
-                                                                choices = c("2 (for fewer than 9 predictors)" = "two", 
+                                                                choices = c("1 (for fewer than 4 predictors" = "one",
+                                                                            "2 (for fewer than 9 predictors)" = "two", 
                                                                             "3 (for 9 or more predictors)" = "three"),
                                                                 selected = "two"),
                                                    width = 3), 
@@ -175,9 +175,9 @@ ui <- dashboardPage(skin = "blue",
                                              ),
                                              fluidRow(
                                                box(
-                                               h3("Linear Model Ouput", align = "center"),
-                                               box(dataTableOutput("lmTableTrain")), 
-                                               box(dataTableOutput("lmTableTest")), 
+                                               h3("Logistic Model Ouput", align = "center"),
+                                               box(dataTableOutput("glmTableTrain")), 
+                                               box(dataTableOutput("glmTableTest")), 
                                                width = 12
                                                )),
                                              fluidRow(
@@ -197,9 +197,61 @@ ui <- dashboardPage(skin = "blue",
                                              )
                                              
                                              ),
-                                    tabPanel("Prediction", "Prediction Tab"), width = 12)
+                                    tabPanel("Prediction", "Prediction Tab", 
+                                             h3("Let's Predict"),
+                                             conditionalPanel(
+                                               condition = "output.predInput.indexOf('avgRunsScored') > -1", 
+                                               numericInput("ARS", "Average Runs Scored", 
+                                                            min = 0, value = 4.5, step = 0.2)), 
+                                             conditionalPanel(
+                                               condition = "output.predInput.indexOf('avgHits') > -1", 
+                                               numericInput("AH", "Average Hits", 
+                                                            min = 0, value = 8.8, step = 0.2)),
+                                             conditionalPanel(
+                                               condition = "output.predInput.indexOf('avgTotalBases') > -1", 
+                                               numericInput("ATB", "Average Total Bases", 
+                                                            min = 0, value = 13.9, step = 0.2)),
+                                             conditionalPanel(
+                                               condition = "output.predInput.indexOf('avgHomeRuns') > -1", 
+                                               numericInput("AHR", "Average Home Runs", 
+                                                            min = 0, value = 1.0, step = 0.1)),
+                                             conditionalPanel(
+                                               condition = "output.predInput.indexOf('avgWalks') > -1", 
+                                               numericInput("AW", "Average Walks", 
+                                                            min = 0, value = 3.3, step = 0.2)),
+                                             conditionalPanel(
+                                               condition = "output.predInput.indexOf('avgRunsAllowed') > -1", 
+                                               numericInput("ARA", "Average Runs Allowed", 
+                                                            min = 0, value = 4.5, step = 0.2)),
+                                             conditionalPanel(
+                                               condition = "output.predInput.indexOf('ERA') > -1", 
+                                               numericInput("PERA", "ERA", 
+                                                            min = 0, value = 4.2, step = 0.2)),
+                                             conditionalPanel(
+                                               condition = "output.predInput.indexOf('avgHitsAllowed') > -1", 
+                                               numericInput("AHA", "Average Hits Allowed", 
+                                                            min =0, value = 8.8, step = 0.2)),
+                                             conditionalPanel(
+                                               condition = "output.predInput.indexOf('avgHomeRunsAllowed') > -1", 
+                                               numericInput("AHRA", "Average Home Runs Allowed", 
+                                                            min =0, value = 1.0, step = 0.1)),
+                                             conditionalPanel(
+                                               condition = "output.predInput.indexOf('avgWalksAllowed') > -1", 
+                                               numericInput("AWA", "Average Walks Allowed", 
+                                                            min =0, value = 3.3, step = 0.2)),
+                                             conditionalPanel(
+                                               condition = "output.predInput.indexOf('avgErrors') > -1", 
+                                               numericInput("AE", "Average Errors", 
+                                                            min = 0, value = 0.68, step = 0.05)),
+                                             conditionalPanel(
+                                               condition = "output.predInput.indexOf('fieldingPct') > -1", 
+                                               numericInput("AFP", "Fielding Percentage (0-1)", 
+                                                            min = 0, max = 1, value = 0.98, step = 0.001)),
+                                             verbatimTextOutput("predInput"), 
+                                             dataTableOutput("prediction"),
+                                    width = 12)
                                   )
-                                ),
+                                )),
                         tabItem(tabName = "Data", 
                                 sidebarLayout(
                                   sidebarPanel(
@@ -230,10 +282,11 @@ ui <- dashboardPage(skin = "blue",
                                     fluidRow(
                                       box(
                                         dataTableOutput("userData"), width = 12)
+                                        )
                                       )
                                     )
                                   )
                                 )
                         )
                       )
-                    )
+                    
