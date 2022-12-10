@@ -1,5 +1,5 @@
 ---
-#title: "about"
+title: "MLB Regular Season Winning Statistics"
 #author: "Kara Belknap"
 #date: "`r Sys.Date()`"
 output: html_document
@@ -9,7 +9,7 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-# MLB Regular Season Winning Statistics
+
 
 ## Purpose
 

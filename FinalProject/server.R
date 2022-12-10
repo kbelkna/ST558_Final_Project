@@ -181,7 +181,7 @@ server <- shinyServer(function(input, output, session) {
       off1 <- teamSubsetFinal %>%
          filter((year <= input$yrSliderO[2]) & (year >= input$yrSliderO[1])) %>%
          mutate(across(c(offVar, pctGamesWon), round, 2)) %>%
-         select(year, worldSeriesWin, team, offVar, pctGamesWon) %>%
+         select(year, worldSeriesWin, team, all_of(offVar), pctGamesWon) %>%
          rename("Year" = year, "World Series Winner?" = worldSeriesWin, 
                 "Franchise Name" = team, "Percentage of Games Won" = pctGamesWon)
    
@@ -583,7 +583,7 @@ server <- shinyServer(function(input, output, session) {
                   "avgErrors", "fieldingPct")
     if(input$userStat == "allStat") {
       userDataAll <- userDataRaw %>%
-        select(simpleStats, offStats, defStats)
+        select(all_of(simpleStats), all_of(offStats), all_of(defStats))
      
       if(input$userTeamSelect == 'TRUE' & input$userYrSelect == 'TRUE') {
         userDataAll2 <- userDataAll %>%
@@ -602,7 +602,7 @@ server <- shinyServer(function(input, output, session) {
             }
       } else if(input$userStat == "offStat") {
         userDataOff <- userDataRaw %>%
-          select(simpleStats, offStats)
+          select(all_of(simpleStats), all_of(offStats))
         
         if(input$userTeamSelect == 'TRUE' & input$userYrSelect == 'TRUE') {
           userDataOff2 <- userDataOff %>%
@@ -622,7 +622,7 @@ server <- shinyServer(function(input, output, session) {
                 }
         } else if(input$userStat == "defStat") {
           userDataDef <- userDataRaw %>%
-            select(simpleStats, defStats)
+            select(all_of(simpleStats), all_of(defStats))
           if(input$userTeamSelect == 'TRUE' & input$userYrSelect == 'TRUE') {
             userDataDef2 <- userDataDef %>%
               filter(team == input$userTeam & (year <= input$userYrSlider[2]) & (year >= input$userYrSlider[1]))
