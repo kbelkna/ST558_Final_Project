@@ -42,4 +42,45 @@ The following manipulations were made to the data:
   * Special Seasons of Note:  
     +  Seasons were shorter in 1981, 1994, and 1995 due to strikes. Consequently there was no postseason held in 1994, so there was no World Series Winner or League Champions for that year.  
     +  The 2020 season was abbreviated due to the Covid-19 pandemic. 
+    
+The following variables are included in this data:  
+
+  * **year** - the baseball season, limited to years from 1981-2021. 
+  * **league** - the team's current league, National League (NL) or American League (AL) as of the 2022 season. 
+  * **division** - the team's current division, East, Central, or West, as of the 2022 season.
+  * **team** - the official current name for the MLB team.
+  * **pctGamesWon** - the percentage of games won by a team in a particular season.
+  * **propGamesWon** - the proportion of games won by a team in a particular season.
+  * **avgRunsScored** - average number of runs scored by the offensive team.
+  * **avgHits** - the average number of hits in a game by the offensive team.
+  * **avgTotalBases** - the average number of bases, calculated by taking the number of hits + doubles + 2 * triples + 3 * homeruns.
+  * **avgHomeRuns** - the average number of home runs per game by the offensive team.
+  * **avgWalks** - the average number of walks by batters for the offensive team.
+  * **avgRunsAllowed** - the average number of runs allowed.
+  * **ERA** - earned runs average for the defensive team.
+  * **avgHitsAllowed** - average hits allowed by the defensive team. 
+  * **avgHomeRunsAllowed** - average home runs scored by the opposing team.
+  * **avgWalksAllowed** - average walks allowed.
+  * **avgErrors** - average errors by defensive team.
+  * **fieldingPct** - fiedling percentage
+  * **leagueWin** - identifies the NL or AL winner for a particular season. 
+  * **worldSeriesWin** - identifies the World Series Champion for a particular season.
+  
+## About the App
+
+This app is divided into different sections which provide the following information:
+
+  * **About** - the current page, which explains the source of the data. 
+  * **Data Exploration** - this page is an EDA which is intended to allow the user to explore different information about the dataset. 
+  * **Modeling** - this page is intended to provide information about modeling. It includes the following tabs: 
+      * **Modeling Info** - this page is intended to explain the different modeling methods included in this analysis. 
+      * **Modeling Output** - this page allows the user to select different modeling methods to model the proportion of games won based on different predictor variables. 
+      * **Prediction** - this page allows the user to input their own predictor variable values and predict the proportion of games won based on the model that was created on the Modeling Output Tab. 
+  * **Data** - this page allows a user to subset the data and download the data into a .csv file for further exploration.
+  
+  
+### Developer's Note
+This app was developed by Kara Belknap. The app is hosted on her github page, which you can access [here](https://github.com/kbelkna/ST558_Final_Project). 
+  
+
       
