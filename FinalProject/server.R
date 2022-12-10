@@ -18,7 +18,6 @@ library(mathjaxr)
 library(caret)
 library(randomForest)
 
-
 # Define server logic 
 server <- shinyServer(function(input, output, session) {
   
@@ -265,13 +264,13 @@ server <- shinyServer(function(input, output, session) {
     })
  
 #The following code is used by the modeling section:  
-  
+
   #capture predictor variables used, store for later use.
   predInput <- reactiveValues(sel = NULL)
   
   observeEvent(input$runModel, {
     predInput$sel <- input$modelParams
-    })
+  })
   
   output$predInput <- renderPrint({
     predInput$sel
@@ -283,26 +282,31 @@ server <- shinyServer(function(input, output, session) {
   })
   
   
+  
+  
+  
+  
   # Create and run glm model
   glmOutput <- eventReactive(input$runModel, {
     
-    set.seed(555)
     modelingData <- teamSubsetFinal %>%
-      mutate(propGamesWon = pctGamesWon/100)
+      mutate(propGamesWon = (pctGamesWon/100))
     
-    trainIndex <- createDataPartition(modelingData$propGamesWon, p = isolate(input$trDataProp), list = FALSE)
+    set.seed(555)
+    
+    trainIndex = createDataPartition(modelingData$propGamesWon, p = isolate(input$trDataProp), list = FALSE)
     modelTrain <- modelingData[trainIndex, ]
     modelTest <- modelingData[-trainIndex, ]
     
-    predictorVars <- paste(isolate(input$modelParams), collapse = "+")
+    predictorVarsGLM <- paste(isolate(input$modelParams), collapse = "+")
     
     cvNumberGLM <- ifelse(isolate(input$glmCV) == "five", 5, 10)
     
-    glmFit = train(as.formula(paste('propGamesWon ~ ', predictorVars)), data = modelTrain,
-                  method = "glm",
-                  family = "quasibinomial",
-                  preProcess = c("center", "scale"),
-                  trControl = trainControl(method = "CV", number = cvNumberGLM))
+    glmFit = train(as.formula(paste('propGamesWon ~ ', predictorVarsGLM)), data = modelTrain,
+                   method = "glm",
+                   family = "quasibinomial",
+                   preProcess = c("center", "scale"),
+                   trControl = trainControl(method = "CV", number = cvNumberGLM))
     
     glm_out = data.frame(glmFit$results)
     
@@ -317,7 +321,7 @@ server <- shinyServer(function(input, output, session) {
                                                 font-weight: bold;', "Logistic Model: Performance on Training Data"))
     
     glmResults = postResample(pred = predict(glmFit, newdata = modelTest), 
-                             obs = modelTest$propGamesWon)
+                              obs = modelTest$propGamesWon)
     
     
     metric_glm_format <- data.frame(glmResults) %>%
@@ -328,7 +332,7 @@ server <- shinyServer(function(input, output, session) {
                                                 color:black;
                                                 font-size:20px;
                                                 font-weight: bold;', "Logistic Model: Performance on Test Data"))
-
+    
     list(modelTrain = modelTrain, modelTest = modelTest, glmFit = glmFit, tableTrain = tableTrain, tableTest = tableTest)
     
     
@@ -337,9 +341,9 @@ server <- shinyServer(function(input, output, session) {
   #output table for training data
   output$glmTableTrain <- renderDataTable({
     
-     glmOutput()$tableTrain
+    glmOutput()$tableTrain
     
-    }) 
+  }) 
   
   #output table for test data
   output$glmTableTest <- renderDataTable({
@@ -348,60 +352,68 @@ server <- shinyServer(function(input, output, session) {
     
   })  
   
- # Create and run tree model
+  # Create and run tree model
   treeOutput <- eventReactive(input$runModel, {
     
-    predictorVars <- paste(isolate(input$modelParams), collapse = "+")
+    modelingData <- teamSubsetFinal %>%
+      mutate(propGamesWon = (pctGamesWon/100))
+    
+    set.seed(555)
+    
+    trainIndex = createDataPartition(modelingData$propGamesWon, p = isolate(input$trDataProp), list = FALSE)
+    modelTrain <- modelingData[trainIndex, ]
+    modelTest <- modelingData[-trainIndex, ]
+    
+    predictorVarsTr <- paste(isolate(input$modelParams), collapse = "+")
     
     cvNumberTree <- ifelse(isolate(input$tree1) == "five", 5, 10)
-
+    
     train.control = trainControl(method = "cv", number = cvNumberTree)
     
     trShrinkage <- ifelse(isolate(input$treeShrink) == "std", 0.1, 0.001)
     
-  
     tunG = expand.grid(n.trees = seq(25,isolate(input$treeN),25),
-                     interaction.depth = 1:isolate(input$treeMax),
-                     shrinkage = trShrinkage,
-                     n.minobsinnode = isolate(input$treeObs))
-  
-    gbmFit <- train(as.formula(paste('propGamesWon ~', predictorVars)),
-                  data = glmOutput()$modelTrain,
-                  method = "gbm",
-                  preProcess = c("center","scale"),
-                  trControl = train.control,
-                  tuneGrid = tunG,
-                  verbose = FALSE
-  )
-  
-   gbm_out <- data.frame(gbmFit$results)
+                       interaction.depth = 1:isolate(input$treeMax),
+                       shrinkage = trShrinkage,
+                       n.minobsinnode = isolate(input$treeObs))
+    
+    gbmFit <- train(as.formula(paste('propGamesWon ~', predictorVarsTr)),
+                    data = modelTrain,
+                    method = "gbm",
+                    preProcess = c("center","scale"),
+                    trControl = train.control,
+                    tuneGrid = tunG,
+                    verbose = FALSE
+    )
+    
+    gbm_out <- data.frame(gbmFit$results)
     gbm_out <- gbm_out %>%
       arrange(RMSE) %>%
       mutate_if(is.numeric, round, 3)
-  
+    
     treeResults <- datatable(gbm_out, options = list(scrollX = TRUE), 
-                    caption = htmltools::tags$caption(style = 'caption-side: top;
+                             caption = htmltools::tags$caption(style = 'caption-side: top;
                                                 text-align: left;
                                                 color:black;
                                                 font-size:20px;
                                                 font-weight: bold;', "Tree Model: Summary"))
-  
+    
     treePlot <- plot(gbmFit)
-  
+    
     gbm_pred <- predict(gbmFit, newdata = modelTest)
     trResults <- postResample(gbm_pred, modelTest$propGamesWon)
     metric_boosting <- data.frame(trResults) %>%
       round(3) 
-
+    
     treeTest <- datatable(metric_boosting, caption = htmltools::tags$caption(style = 'caption-side: top;
                                                 text-align: left;
                                                 color:black;
                                                 font-size:20px;
                                                 font-weight: bold;', "Tree Model: Performance on Training Data"))
-  
+    
     list(treeResults = treeResults, treePlot = treePlot, treeTest = treeTest)
-
- })
+    
+  })
   
   #output table for training data
   output$treeResultsTable <- renderDataTable({
@@ -428,7 +440,16 @@ server <- shinyServer(function(input, output, session) {
   # Create and run tree model
   rfOutput <- eventReactive(input$runModel, {
     
-    predictorVars <- paste(isolate(input$modelParams), collapse = "+")
+    modelingData <- teamSubsetFinal %>%
+      mutate(propGamesWon = (pctGamesWon/100))
+    
+    set.seed(555)
+    
+    trainIndex = createDataPartition(modelingData$propGamesWon, p = isolate(input$trDataProp), list = FALSE)
+    modelTrain <- modelingData[trainIndex, ]
+    modelTest <- modelingData[-trainIndex, ]
+    
+    predictorVarsRF <- paste(isolate(input$modelParams), collapse = "+")
     
     cvNumberRF <- ifelse(isolate(input$rf1) == "five", 5, 10)
     
@@ -436,7 +457,7 @@ server <- shinyServer(function(input, output, session) {
     
     train.control = trainControl(method = "cv", number = cvNumberRF)
     
-    rfFit <- train(as.formula(paste('propGamesWon ~', predictorVars)),
+    rfFit <- train(as.formula(paste('propGamesWon ~', predictorVarsRF)),
                    data = modelTrain,
                    method = "rf",
                    trControl = train.control,
@@ -454,7 +475,7 @@ server <- shinyServer(function(input, output, session) {
                                                 font-size:20px;
                                                 font-weight: bold;', "Random Forest Model: Performance on Training Data"))
     
-    RandomForestFit <- randomForest(as.formula(paste('pctGamesWon ~', predictorVars)), 
+    RandomForestFit <- randomForest(as.formula(paste('pctGamesWon ~', predictorVarsRF)), 
                                     data = modelTrain, ntree = 500, importance = TRUE)
     
     RF_pred <- predict(rfFit, newdata = modelTest)
@@ -492,6 +513,10 @@ server <- shinyServer(function(input, output, session) {
     rfOutput()$rfTestTable
     
   })  
+  
+  
+  
+
   
   
   
