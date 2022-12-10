@@ -76,7 +76,7 @@ This app is divided into different sections which provide the following informat
       * **Modeling Info** - this page is intended to explain the different modeling methods included in this analysis. 
       * **Modeling Output** - this page allows the user to select different modeling methods to model the proportion of games won based on different predictor variables. 
       * **Prediction** - this page allows the user to input their own predictor variable values and predict the proportion of games won based on the model that was created on the Modeling Output Tab. 
-  * **Data** - this page allows a user to subset the data and download the data into a .csv file for further exploration.
+  * **Data Output** - this page allows a user to subset the data and download the data into a .csv file for further exploration.
   
   
 ### Developer's Note
