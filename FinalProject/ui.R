@@ -102,15 +102,15 @@ ui <- dashboardPage(skin = "red",
                                              h3("Regression Modeling Overview"),
                                              p("Lots of Info coming soon"),
                                              uiOutput('ex3')),
-                                    tabPanel("Modeling Output",  
-                                             fluidRow(
-                                               box(
-                                               h4("Instructions"), 
-                                               p("This page will model the proportion of games won based on selected 
-                                                 variables and modeling settings. Please use the button 'Click Here 
-                                                 to Run Models' once the desired options have been selected."), 
-                                               width = 12
-                                             )),
+                                    tabPanel("Modeling Output",  "HI",
+                                             # fluidRow(
+                                             #   box(
+                                             #   h4("Instructions"), 
+                                             #   p("This page will model the proportion of games won based on selected 
+                                             #     variables and modeling settings. Please use the button 'Click Here 
+                                             #     to Run Models' once the desired options have been selected."), 
+                                             #   width = 12
+                                             # )),
                                              fluidRow(
                                                box(
                                                  column(
@@ -169,7 +169,7 @@ ui <- dashboardPage(skin = "red",
                                                                 choices = c("1 (for fewer than 4 predictors" = "one",
                                                                             "2 (for fewer than 9 predictors)" = "two", 
                                                                             "3 (for 9 or more predictors)" = "three"),
-                                                                selected = "two"),
+                                                                selected = "one"),
                                                    width = 3), 
                                                  width = 12)
                                                ),
@@ -207,14 +207,14 @@ ui <- dashboardPage(skin = "red",
                                     tabPanel("Prediction", 
                                              fluidRow(
                                                box(
-                                               h4("Instructions"), 
-                                               p("This page will predict the proportion of games won based on 
-                                                  the last logistic regression model that was created on the Modeling 
+                                               h4("Instructions"),
+                                               p("This page will predict the proportion of games won based on
+                                                  the last logistic regression model that was created on the Modeling
                                                   Output page. As such, no output will be displayed until the model
-                                                  has been created. Once the model has been run, input each variable to 
-                                                  observe how the prediction changes based on each variable. The 
-                                                  default for each parameter is the mean of the respective variable 
-                                                  based on data from 1981-2021."), 
+                                                  has been created. Once the model has been run, input each variable to
+                                                  observe how the prediction changes based on each variable. The
+                                                  default for each parameter is the mean of the respective variable
+                                                  based on data from 1981-2021."),
                                                width = 12
                                              )),
                                              conditionalPanel(
@@ -265,6 +265,8 @@ ui <- dashboardPage(skin = "red",
                                                condition = "output.predInput.indexOf('fieldingPct') > -1", 
                                                numericInput("AFP", "Fielding Percentage (0-1)", 
                                                             min = 0, max = 1, value = 0.98, step = 0.001)),
+                                             h4("List of Parameters Selected"),
+                                             verbatimTextOutput("predInput"),
                                              dataTableOutput("prediction"),
                                     width = 12)
                                   )
