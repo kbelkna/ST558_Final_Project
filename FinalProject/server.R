@@ -25,7 +25,6 @@ server <- shinyServer(function(input, output, session) {
   teamSubsetFinal <- read_csv("teamSubsetFinal.csv")
   userDataRaw <- read_csv("userDataRaw.csv")
   
-  
 #The following content is used for the about section:
   
   #create markdown file to be used for about section
@@ -267,64 +266,79 @@ server <- shinyServer(function(input, output, session) {
  
 #The following code is used by the modeling section:  
   
-  # Create and run linear model
-  lmOutput <- eventReactive(input$runModel, {
+  #capture predictor variables used, store for later use.
+  predInput <- reactiveValues(sel = NULL)
+  
+  observeEvent(input$runModel, {
+    predInput$sel <- input$modelParams
+    })
+  
+  output$predInput <- renderPrint({
+    predInput$sel
+  })
+  
+  # Create and run glm model
+  glmOutput <- eventReactive(input$runModel, {
     
     set.seed(555)
-    modelingData <- teamSubsetFinal
-    trainIndex <- createDataPartition(modelingData$pctGamesWon, p = isolate(input$trDataProp), list = FALSE)
+    modelingData <- teamSubsetFinal %>%
+      mutate(propGamesWon = pctGamesWon/100)
+    
+    trainIndex <- createDataPartition(modelingData$propGamesWon, p = isolate(input$trDataProp), list = FALSE)
     modelTrain <- modelingData[trainIndex, ]
     modelTest <- modelingData[-trainIndex, ]
     
     predictorVars <- paste(isolate(input$modelParams), collapse = "+")
     
-    cvNumberLM <- ifelse(isolate(input$linearCV) == "five", 5, 10)
+    cvNumberGLM <- ifelse(isolate(input$glmCV) == "five", 5, 10)
     
-    lmFit = train(as.formula(paste('pctGamesWon ~', predictorVars)), data = modelTrain,
-                  method="lm",
+    glmFit = train(as.formula(paste('propGamesWon ~ ', predictorVars)), data = modelTrain,
+                  method = "glm",
+                  family = "quasibinomial",
                   preProcess = c("center", "scale"),
-                  trControl = trainControl(method = "CV", number = cvNumberLM))
+                  trControl = trainControl(method = "CV", number = cvNumberGLM))
     
-    lm_out = data.frame(lmFit$results)
+    glm_out = data.frame(glmFit$results)
     
-    lm_out_format <- lm_out %>%
-      mutate_if(is.numeric, round, 3)
+    glm_out_format <- glm_out %>%
+      mutate_if(is.numeric, round, 3) %>%
+      select(-parameter)
     
-    tableTrain <- datatable(lm_out_format, caption = htmltools::tags$caption(style = 'caption-side: top;
+    tableTrain <- datatable(glm_out_format, caption = htmltools::tags$caption(style = 'caption-side: top;
                                                 text-align: left;
                                                 color:black;
                                                 font-size:20px;
-                                                font-weight: bold;', "Linear Model: Performance on Training Data"))
+                                                font-weight: bold;', "Logistic Model: Performance on Training Data"))
     
-    lmResults = postResample(pred = predict(lmFit, newdata = modelTest), 
-                             obs = modelTest$pctGamesWon)
+    glmResults = postResample(pred = predict(glmFit, newdata = modelTest), 
+                             obs = modelTest$propGamesWon)
     
     
-    metric_lm_format <- data.frame(lmResults) %>%
+    metric_glm_format <- data.frame(glmResults) %>%
       mutate_if(is.numeric, round, 3)
     
-    tableTest <- datatable(metric_lm_format, caption = htmltools::tags$caption(style = 'caption-side: top;
+    tableTest <- datatable(metric_glm_format, caption = htmltools::tags$caption(style = 'caption-side: top;
                                                 text-align: left;
                                                 color:black;
                                                 font-size:20px;
-                                                font-weight: bold;', "Linear Model: Performance on Test Data"))
+                                                font-weight: bold;', "Logistic Model: Performance on Test Data"))
 
-    list(modelTrain = modelTrain, modelTest = modelTest, lmFit = lmFit, tableTrain = tableTrain, tableTest = tableTest)
+    list(modelTrain = modelTrain, modelTest = modelTest, glmFit = glmFit, tableTrain = tableTrain, tableTest = tableTest)
     
     
   })
   
   #output table for training data
-  output$lmTableTrain <- renderDataTable({
+  output$glmTableTrain <- renderDataTable({
     
-     lmOutput()$tableTrain
+     glmOutput()$tableTrain
     
     }) 
   
   #output table for test data
-  output$lmTableTest <- renderDataTable({
+  output$glmTableTest <- renderDataTable({
     
-    lmOutput()$tableTest
+    glmOutput()$tableTest
     
   })  
   
@@ -345,8 +359,8 @@ server <- shinyServer(function(input, output, session) {
                      shrinkage = trShrinkage,
                      n.minobsinnode = isolate(input$treeObs))
   
-    gbmFit <- train(as.formula(paste('pctGamesWon ~', predictorVars)),
-                  data = lmOutput()$modelTrain,
+    gbmFit <- train(as.formula(paste('propGamesWon ~', predictorVars)),
+                  data = glmOutput()$modelTrain,
                   method = "gbm",
                   preProcess = c("center","scale"),
                   trControl = train.control,
@@ -369,7 +383,7 @@ server <- shinyServer(function(input, output, session) {
     treePlot <- plot(gbmFit)
   
     gbm_pred <- predict(gbmFit, newdata = modelTest)
-    trResults <- postResample(gbm_pred, modelTest$pctGamesWon)
+    trResults <- postResample(gbm_pred, modelTest$propGamesWon)
     metric_boosting <- data.frame(trResults) %>%
       round(3) 
 
@@ -412,11 +426,11 @@ server <- shinyServer(function(input, output, session) {
     
     cvNumberRF <- ifelse(isolate(input$rf1) == "five", 5, 10)
     
-    mtryRF <- ifelse(isolate(input$rfMtry) == "two", 2, 3)
+    mtryRF <- ifelse(isolate(input$rfMtry) == "two", 2, ifelse(isolate(input$rfMtry) == "one", 1, 3))
     
     train.control = trainControl(method = "cv", number = cvNumberRF)
     
-    rfFit <- train(as.formula(paste('pctGamesWon ~', predictorVars)),
+    rfFit <- train(as.formula(paste('propGamesWon ~', predictorVars)),
                    data = modelTrain,
                    method = "rf",
                    trControl = train.control,
@@ -438,7 +452,7 @@ server <- shinyServer(function(input, output, session) {
                                     data = modelTrain, ntree = 500, importance = TRUE)
     
     RF_pred <- predict(rfFit, newdata = modelTest)
-    metric_rf = postResample(RF_pred, modelTest$pctGamesWon)
+    metric_rf = postResample(RF_pred, modelTest$propGamesWon)
     metric_rf <- data.frame(metric_rf) %>%
       mutate_if(is.numeric, round, 3)
     
@@ -475,8 +489,30 @@ server <- shinyServer(function(input, output, session) {
   
   
   
+  output$prediction <- renderDataTable({
+    
+    valuesPredg <- data.frame(avgRunsScored = input$ARS, avgRunsAllowed = input$ARA, avgErrors = input$AE, 
+                              avgWalks = input$AW)
+    predictedProportion <- predict(glmOutput()$glmFit, newdata = valuesPredg)
+    
+    predictedProportion2 <- data.frame(predictedProportion) %>%
+      mutate_if(is.numeric, round, 3) 
+    
+    bigtable <- data.frame(predictedProportion2)
+    
+    datatable(bigtable, options = list(dom = 't', 
+                                       columnDefs = list(list(className = 'dt-center', targets = "_all"))), 
+                                       rownames = FALSE, 
+                    caption = htmltools::tags$caption(style = 'caption-side: top;
+                                                              text-align: left;
+                                                              color:black;
+                                                              font-size:20px;
+                                                              font-weight: bold;', "Predicted Proportion of Games Won"))
+  
+  })  
   
   
+
   
   
   
