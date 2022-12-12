@@ -12,18 +12,18 @@ library(knitr)
 library(shiny)
 library(shinydashboard)
 library(DT)
-library(Lahman)
 library(mathjaxr)
 library(caret)
 library(randomForest)
 
-
+#Files used
 teamSubsetFinal <- read_csv("teamSubsetFinal.csv")
 userDataRaw <- read_csv("userDataRaw.csv")
 
-# Define UI for application that draws a histogram
+# Define UI for application 
 ui <- dashboardPage(skin = "red",
                     dashboardHeader(title = "MLB Modeling"),
+                    #Setup sidebar
                     dashboardSidebar(sidebarMenu(
                       menuItem("About", tabName = "About", icon = icon("baseball")),
                       menuItem("Data Exploration", tabName = "EDA", icon = icon("medal")), 
@@ -31,9 +31,10 @@ ui <- dashboardPage(skin = "red",
                       menuItem("Data Output", tabName = "Data", icon = icon("baseball-bat-ball"))
                       )
                       ),
+                    #setup body
                     dashboardBody(
                       tabItems(
-                        #About tab
+                        #About page
                         tabItem(tabName = "About",
                                 box(
                                   #show MLB logo
@@ -43,7 +44,7 @@ ui <- dashboardPage(skin = "red",
                                   width = 12
                                   )
                                 ),
-                        #EDA Tab
+                        #EDA page
                         tabItem(tabName = "EDA",
                                 fluidRow(
                                   box(
@@ -90,14 +91,17 @@ ui <- dashboardPage(skin = "red",
                                                                   selected = "East")),
                                     width=12)
                                   ),
+                                #EDA output
                                 fluidRow(
                                   box(plotOutput("plot1"), width = 6),
                                   box(dataTableOutput("table1"), width = 6)
                                   )
                                 ),
+                        #setup modeling page
                         tabItem(tabName = "Modeling",
                                 fluidRow(
                                   tabBox(
+                                    #setup modeling info page
                                     tabPanel("Modeling Info", 
                                              h3("Regression Modeling Overview"),
                                              p("This page illustrates the power of modeling and being able
@@ -163,13 +167,19 @@ ui <- dashboardPage(skin = "red",
                                                samples from the original data set that were not included in a particular
                                                bootstrap data set. One important training parameter for random forest
                                                models is called mtry. Generally, the maximum number, m, which should
-                                               be used for this tuning parameter is:"),
-                                             uiOutput('math2'),
+                                               be used for this tuning parameter, should be set to p/3, where p is 
+                                               the number of predictors in the model."),
                                              p("The benefits of the Random Forest model are they use the out of bag
                                                error to test the data using samples from the original dataset which
                                                improves prediction. One downside is that random forest models are
-                                               generally slower than other models.")
+                                               generally slower than other models."), 
+                                             p("Regardless of the model selected in this app, the user should attempt 
+                                               to minimize RMSE. In this particular app, the user can select the
+                                               proportion of data to be used for training of the model and the 
+                                               proportion of data to be used for testing the model. A good model 
+                                               should yield low RMSE values for both training and testing data sets.")
                                              ),
+                                    #setup modeling output tab
                                     tabPanel("Modeling Output",  
                                              fluidRow(
                                                box(
@@ -203,7 +213,7 @@ ui <- dashboardPage(skin = "red",
                                                               selected = "avgRunsScored"),
                                                    width = 3), 
                                                  column(
-                                                   h4("GLM Regression Options"), 
+                                                   h4("Generalized Linear Model Options"), 
                                                    radioButtons("glmCV", "Select 5-fold or 10-fold cross-validation", 
                                                                 choices = c("5-fold" = "five", 
                                                                             "10-fold" = "ten"),
@@ -250,7 +260,7 @@ ui <- dashboardPage(skin = "red",
                                              ),
                                              fluidRow(
                                                box(
-                                               h3("GLM Regression Model Ouput", align = "center"),
+                                               h3("Generalized Linear Model Ouput", align = "center"),
                                                box(dataTableOutput("glmTableTrain")), 
                                                box(dataTableOutput("glmTableTest")), 
                                                width = 12
@@ -272,6 +282,7 @@ ui <- dashboardPage(skin = "red",
                                              )
                                              
                                              ),
+                                    #setup the prediction tab
                                     tabPanel("Prediction", 
                                              fluidRow(
                                                box(
@@ -336,9 +347,10 @@ ui <- dashboardPage(skin = "red",
                                              h4("List of Parameters Selected"),
                                              verbatimTextOutput("predInput"),
                                              dataTableOutput("prediction"),
-                                    width = 12)
+                                    width = 12), width = 12
                                   )
                                 )),
+                        #setup the data manipulation page
                         tabItem(tabName = "Data", 
                                 sidebarLayout(
                                   sidebarPanel(
@@ -376,4 +388,3 @@ ui <- dashboardPage(skin = "red",
                                 )
                         )
                       )
-                    
