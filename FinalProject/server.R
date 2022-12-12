@@ -13,7 +13,6 @@ library(knitr)
 library(shiny)
 library(shinydashboard)
 library(DT)
-library(Lahman)
 library(mathjaxr)
 library(caret)
 library(randomForest)
@@ -33,7 +32,6 @@ server <- shinyServer(function(input, output, session) {
     shiny::includeHTML('about.html') 
   }) 
   
-
 #The following content is used for the EDA section:
   
  #create plot1 conditionally based on input stat.
@@ -265,21 +263,16 @@ server <- shinyServer(function(input, output, session) {
  
 #The following code is used by the modeling section:  
   
-  #The following section documents mathjax functions needed for the modeling info section.
+  #The following section documents the mathjax function needed for the modeling info section.
+  
+  #logistic regression
   output$math1 <- renderUI({
     withMathJax(
       helpText('Logistic Regression
               $$P = \\frac{e^{\\beta_0 + \\beta_1x}}{1 + e^{\\beta_0 + \\beta_1x}}$$'
       ))
   })
-  
-  output$math2 <- renderUI({
-    withMathJax(
-      helpText('m
-               $$m = \\frac{p}{3}$$'
-    ))
-  })
-  
+
   #capture predictor variables used, store for later use.
   predInput <- reactiveValues(sel = NULL)
   
@@ -289,11 +282,6 @@ server <- shinyServer(function(input, output, session) {
   
   output$predInput <- renderPrint({
     predInput$sel
-  })
-  
-  output$predDF <- renderTable({
-    predInput$sel
-    
   })
   
   # Create and run glm model
@@ -324,7 +312,8 @@ server <- shinyServer(function(input, output, session) {
       mutate_if(is.numeric, round, 3) %>%
       select(-parameter)
     
-    tableTrain <- datatable(glm_out_format, caption = htmltools::tags$caption(style = 'caption-side: top;
+    tableTrain <- datatable(glm_out_format, options = list(dom = 't'),
+                            caption = htmltools::tags$caption(style = 'caption-side: top;
                                                 text-align: left;
                                                 color:black;
                                                 font-size:20px;
@@ -337,7 +326,8 @@ server <- shinyServer(function(input, output, session) {
     metric_glm_format <- data.frame(glmResults) %>%
       mutate_if(is.numeric, round, 3)
     
-    tableTest <- datatable(metric_glm_format, caption = htmltools::tags$caption(style = 'caption-side: top;
+    tableTest <- datatable(metric_glm_format, options = list(dom = 't'), 
+                          caption = htmltools::tags$caption(style = 'caption-side: top;
                                                 text-align: left;
                                                 color:black;
                                                 font-size:20px;
@@ -409,7 +399,8 @@ server <- shinyServer(function(input, output, session) {
     metric_boosting <- data.frame(trResults) %>%
       round(3) 
     
-    treeTest <- datatable(metric_boosting, caption = htmltools::tags$caption(style = 'caption-side: top;
+    treeTest <- datatable(metric_boosting, options = list(dom = 't'), 
+                          caption = htmltools::tags$caption(style = 'caption-side: top;
                                                 text-align: left;
                                                 color:black;
                                                 font-size:20px;
@@ -466,7 +457,7 @@ server <- shinyServer(function(input, output, session) {
     rf_out <- rf_out %>%
       mutate_if(is.numeric, round, 3)
     
-    rfTrainTable <- datatable(rf_out, options = list(scrollX = TRUE), 
+    rfTrainTable <- datatable(rf_out, options = list(scrollX = TRUE, dom = 't'),
                               caption = htmltools::tags$caption(style = 'caption-side: top;
                                                 text-align: left;
                                                 color:black;
@@ -481,11 +472,12 @@ server <- shinyServer(function(input, output, session) {
     metric_rf <- data.frame(metric_rf) %>%
       mutate_if(is.numeric, round, 3)
     
-    rfTestTable <- datatable(metric_rf, caption = htmltools::tags$caption(style = 'caption-side: top;
+    rfTestTable <- datatable(metric_rf, options = list(dom = 't'),
+                              caption = htmltools::tags$caption(style = 'caption-side: top;
                                                 text-align: left;
                                                 color:black;
                                                 font-size:20px;
-                                                font-weight: bold;', "Tree Model: Performance on Test Data"))
+                                                font-weight: bold;', "Random Forest Model: Performance on Test Data"))
     
     list(rfTrainTable = rfTrainTable, RandomForestFit = RandomForestFit, rfTestTable = rfTestTable)
     
@@ -550,21 +542,6 @@ server <- shinyServer(function(input, output, session) {
                                                                           "Predicted Proportion of Games Won"))
   
   })  
-  
-  
- 
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
   
 #The following code is used by the data output section
 
@@ -646,11 +623,6 @@ server <- shinyServer(function(input, output, session) {
      write.csv(userDataSet(), file, row.names = FALSE)
    }
  )
-
-
- 
-
- 
  
 })
 
