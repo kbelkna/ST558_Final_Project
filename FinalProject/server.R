@@ -178,7 +178,7 @@ server <- shinyServer(function(input, output, session) {
      
       off1 <- teamSubsetFinal %>%
          filter((year <= input$yrSliderO[2]) & (year >= input$yrSliderO[1])) %>%
-         mutate(across(c(offVar, pctGamesWon), round, 2)) %>%
+         mutate(across(c(all_of(offVar), pctGamesWon), round, 2)) %>%
          select(year, worldSeriesWin, team, all_of(offVar), pctGamesWon) %>%
          rename("Year" = year, "World Series Winner?" = worldSeriesWin, 
                 "Franchise Name" = team, "Percentage of Games Won" = pctGamesWon)
